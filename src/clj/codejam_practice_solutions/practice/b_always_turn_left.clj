@@ -50,7 +50,7 @@
                         west "<")
         x (:x player)
         y (:y player)]
-    (update-in maze [x] #(replace-char % y player-symbol))))
+    (update-in maze [y] #(replace-char % x player-symbol))))
 
 (defn render-cell [cell]
   (condp = (:type cell)
@@ -63,52 +63,71 @@
                     (s/join (map render-cell row))))]
     (render-player player rows)))
 
-(defn all-cells [{:keys [maze]}]
-  (mapcat identity maze))
-
-(defn mark-wall-at-player-left [{:keys [player maze] :as labyrinth}]
-  (let [new-maze
-        (assoc-in maze [(:x player) (dec (:y player))] (wall-cell))]
-    (assoc labyrinth :maze new-maze)))
-
-(defn get-cell-in-front-of-player [{:keys [x y facing]}]
+;; cell retrieval
+(defn get-cell-in-front-of-player [{:keys [x y facing] :as player}]
   (condp = facing
-    north {:x x, :y (inc y)}
-    south {:x x, :y (dec y)}
-    east {:x (inc x), :y y}
-    west {:x (dec x), :y y}))
+    north (assoc player :y (dec y))
+    south (assoc player :y (inc y))
+    east (assoc player :x (inc x))
+    west (assoc player :x (dec x))))
 
-(defn mark-wall-at-player-front [{:keys [player maze] :as labyrinth}]
-  (let [{:keys [x y]} (get-cell-in-front-of-player player)
-        new-maze
-        (assoc-in maze [x y] (wall-cell))]
-    (assoc labyrinth :maze new-maze)))
+(defn get-cell-to-the-left-of-player [{:keys [x y facing] :as player}]
+  (condp = facing
+    north (assoc player :x (dec x))
+    south (assoc player :x (inc x))
+    east (assoc player :y (dec y))
+    west (assoc player :y (inc y))))
 
+(defn get-cell-to-the-top-left-of-player [{:keys [facing] :as player}]
+  (-> player
+      get-cell-in-front-of-player
+      get-cell-to-the-left-of-player))
+
+(defn mark-wall-at-player-left [{:keys [player] :as labyrinth}]
+  (let [{:keys [x y]} (get-cell-to-the-left-of-player player)]
+    (assoc-in labyrinth [:maze y x] (wall-cell))))
+
+(defn mark-wall-at-player-left-top [{:keys [player] :as labyrinth}]
+  (let [{:keys [x y]} (get-cell-to-the-top-left-of-player player)]
+    (assoc-in labyrinth [:maze y x] (wall-cell))))
+
+;; TODO should mark cell in front as empty
 (defn move-player-forward [{:keys [player] :as labyrinth}]
   (condp = (:facing player)
-    north (update-in labyrinth [:player :y] inc)
-    south (update-in labyrinth [:player :y] dec)
+    north (update-in labyrinth [:player :y] dec)
+    south (update-in labyrinth [:player :y] inc)
     east (update-in labyrinth [:player :x] inc)
     west (update-in labyrinth [:player :x] dec)))
 
-(defn move-forward [maze]
-  (-> maze
+;; turning around
+(defn turn-right [{:keys [player] :as labyrinth}]
+  (assoc-in labyrinth [:player :facing]
+            (condp = (:facing player)
+              north east
+              east south
+              south west
+              west north)))
+
+(defn turn-left [labyrinth]
+  (-> labyrinth
+      turn-right
+      turn-right
+      turn-right))
+
+;; entire moves
+(defn move-forward [labyrinth]
+  (-> labyrinth
       mark-wall-at-player-left
       move-player-forward))
 
-(defn turn-right [{:keys [player]}]
-  (assoc-in player [:facing] ))
-
-(defn move-right [maze player]
-  (-> maze
+(defn move-right [labyrinth]
+  (-> labyrinth
       mark-wall-at-player-left
-      mark-wall-at-player-front
-      turn-right))
+      mark-wall-at-player-left-top
+      turn-right
+      move-forward))
 
-(defn move-left [maze player])
-
-(defn move [maze direction]
-  (condp = direction
-    forward (move-forward maze)
-    right (move-right maze)
-    left (move-left maze)))
+(defn move-left [labyrinth]
+  (-> labyrinth
+      turn-left
+      move-player-forward))

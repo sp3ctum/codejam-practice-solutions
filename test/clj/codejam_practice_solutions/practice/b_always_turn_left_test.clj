@@ -27,34 +27,16 @@
           "░░░░"
           "░░░░"
           "░░░░"]
-         (maze/render-labyrinth (maze/create-unsolved-labyrinth "WW")))))
-
-(deftest mark-wall-at-player-left
-  (is (= {:player {:x 1, :y 1, :facing :south},
-          :maze [[{:type :unknown} {:type :unknown}]
-                 [{:type :wall}    {:type :unknown}]
-                 [{:type :unknown} {:type :unknown}]
-                 [{:type :unknown} {:type :unknown}]]}
-         (maze/mark-wall-at-player-left
-          {:player {:x 1, :y 1, :facing :south},
-           :maze [[{:type :unknown} {:type :unknown}]
-                  [{:type :unknown} {:type :unknown}]
-                  [{:type :unknown} {:type :unknown}]
-                  [{:type :unknown} {:type :unknown}]]}))))
-
-(deftest move-player-forward
-
-  (is (= {:player {:x 1, :y 2, :facing :north}}
-         (maze/move-player-forward {:player {:x 1, :y 1, :facing maze/north}})))
-
-  (is (= {:player {:x 1, :y 0, :facing :south}}
-         (maze/move-player-forward {:player {:x 1, :y 1, :facing maze/south}})))
-
-  (is (= {:player {:x 2, :y 1, :facing :east}}
-         (maze/move-player-forward {:player {:x 1, :y 1, :facing maze/east}})))
-
-  (is (= {:player {:x 0, :y 1, :facing :west}}
-         (maze/move-player-forward {:player {:x 1, :y 1, :facing maze/west}}))))
+         (maze/render-labyrinth (maze/create-unsolved-labyrinth "WW"))))
+  (is (= ["░░░░"
+          "░v░░"
+          "░░░░"
+          "░░░░"]
+         (maze/render-labyrinth
+          (parse-maze ["░░░░"
+                       "░v░░"
+                       "░░░░"
+                       "░░░░"])))))
 
 (defn parse-cell [cell-string]
   (condp = (str cell-string)
@@ -66,13 +48,11 @@
     "<" (maze/empty-cell)
     ">" (maze/empty-cell)))
 
-(some #(when (= \l %) %) "alat")
-
 (defn parse-player-position [maze]
   (let [[x y cell] (first (for [[row-index row] (map vector (range) maze)
                                 [cell-index cell] (map vector (range) row)
                                 :when (some #(when (= % cell) %) "<A>v")]
-                            [row-index cell-index cell]))]
+                            [cell-index row-index cell]))]
     (condp = cell
       \A (maze/player-at x y maze/north)
       \v (maze/player-at x y maze/south)
@@ -91,15 +71,15 @@
                                  "░░░░"
                                  "░░A░"
                                  "░░░░"])))
-  (is (= {:x 0, :y 1, :facing :west}
+  (is (= {:x 1, :y 0, :facing :west}
          (parse-player-position ["░<░░"])))
-  (is (= {:x 0, :y 3, :facing :east}
+  (is (= {:x 3, :y 0, :facing :east}
          (parse-player-position ["░░░>"]))))
 
 ;; test readability helper :|
 (defn parse-maze [lines]
-  (let [maze (for [line lines]
-               (map parse-cell line))
+  (let [maze (vec (for [line lines]
+                    (vec (map parse-cell line))))
         player-position (parse-player-position lines)]
     {:maze maze
      :player player-position}))
@@ -111,15 +91,119 @@
          (parse-maze ["░░░░"
                       "░v░░"]))))
 
-(deftest mark-wall-at-player-front
-  (is (= {:player {:x 1, :y 1, :facing :south},
-          :maze (parse-maze ["░⎕░░"
-                             "░v░░"
-                             "░░░░"
-                             "░░░░"])}
-         (maze/mark-wall-at-player-front
-          {:player {:x 1, :y 1, :facing :south},
-           :maze (parse-maze ["░░░░"
-                              "░v░░"
-                              "░░░░"
-                              "░░░░"])}))))
+(deftest mark-wall-at-player-left
+  (is (= ["░⎕░░"
+          "░>░░"
+          "░░░░"
+          "░░░░"]
+         (maze/render-labyrinth (maze/mark-wall-at-player-left
+                                 (parse-maze ["░░░░"
+                                              "░>░░"
+                                              "░░░░"
+                                              "░░░░"]))))))
+
+(deftest move-forward
+  (is (= ["░A░░"
+          "⎕ ░░"
+          "░░░░"
+          "░░░░"]
+         (maze/render-labyrinth (maze/move-forward
+                                 (parse-maze ["░░░░"
+                                              "░A░░"
+                                              "░░░░"
+                                              "░░░░"])))))
+  (is (= ["░⎕░░"
+          "░ >░"
+          "░░░░"
+          "░░░░"]
+         (maze/render-labyrinth (maze/move-forward
+                                 (parse-maze ["░░░░"
+                                              "░>░░"
+                                              "░░░░"
+                                              "░░░░"])))))
+  (is (= ["░░░░"
+          "░ ⎕░"
+          "░v░░"
+          "░░░░"]
+         (maze/render-labyrinth (maze/move-forward
+                                 (parse-maze ["░░░░"
+                                              "░v░░"
+                                              "░░░░"
+                                              "░░░░"])))))
+  (is (= ["░░░░"
+          "< ░░"
+          "░⎕░░"
+          "░░░░"]
+         (maze/render-labyrinth (maze/move-forward
+                                 (parse-maze ["░░░░"
+                                              "░<░░"
+                                              "░░░░"
+                                              "░░░░"]))))))
+
+(deftest move-right
+  (is (= ["░A░░"
+          "⎕ ░░"
+          "⎕⎕░░"
+          "░░░░"] (maze/render-labyrinth (maze/move-right
+                                          (parse-maze ["░░░░"
+                                                       "░<░░"
+                                                       "░░░░"
+                                                       "░░░░"])))))
+  (is (= ["⎕⎕░░"
+          "⎕ >░"
+          "░░░░"
+          "░░░░"] (maze/render-labyrinth (maze/move-right
+                                          (parse-maze ["░░░░"
+                                                       "░A░░"
+                                                       "░░░░"
+                                                       "░░░░"])))))
+  (is (= ["░⎕⎕░"
+          "░ ⎕░"
+          "░v░░"
+          "░░░░"] (maze/render-labyrinth (maze/move-right
+                                          (parse-maze ["░░░░"
+                                                       "░>░░"
+                                                       "░░░░"
+                                                       "░░░░"])))))
+  (is (= ["░░░░"
+          "< ⎕░"
+          "░⎕⎕░"
+          "░░░░"] (maze/render-labyrinth (maze/move-right
+                                          (parse-maze ["░░░░"
+                                                       "░v░░"
+                                                       "░░░░"
+                                                       "░░░░"]))))))
+
+(deftest move-left
+  (is (= ["░░░░"
+          "< ░░"
+          "░░░░"
+          "░░░░"] (maze/render-labyrinth
+                   (maze/move-left (parse-maze ["░░░░"
+                                                "░A░░"
+                                                "░░░░"
+                                                "░░░░"])))))
+  (is (= ["░A░░"
+          "░ ░░"
+          "░░░░"
+          "░░░░"] (maze/render-labyrinth
+                   (maze/move-left (parse-maze ["░░░░"
+                                                "░>░░"
+                                                "░░░░"
+                                                "░░░░"])))))
+  (is (= ["░░░░"
+          "░ >░"
+          "░░░░"
+          "░░░░"] (maze/render-labyrinth
+                   (maze/move-left (parse-maze ["░░░░"
+                                                "░v░░"
+                                                "░░░░"
+                                                "░░░░"])))))
+  (is (= ["░░░░"
+          "░ ░░"
+          "░v░░"
+          "░░░░"] (maze/render-labyrinth
+                   (maze/move-left (parse-maze ["░░░░"
+                                                "░<░░"
+                                                "░░░░"
+                                                "░░░░"]))))))
