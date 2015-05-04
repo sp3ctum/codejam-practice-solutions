@@ -91,13 +91,18 @@
   (let [{:keys [x y]} (get-cell-to-the-top-left-of-player player)]
     (assoc-in labyrinth [:maze y x] (wall-cell))))
 
-;; TODO should mark cell in front as empty
 (defn move-player-forward [{:keys [player] :as labyrinth}]
-  (condp = (:facing player)
-    north (update-in labyrinth [:player :y] dec)
-    south (update-in labyrinth [:player :y] inc)
-    east (update-in labyrinth [:player :x] inc)
-    west (update-in labyrinth [:player :x] dec)))
+  (let [[x y] [(:x player)
+               (:y player)]
+        [new-x new-y] (condp = (:facing player)
+                        north [x (dec y)]
+                        south [x (inc y)]
+                        east [(inc x) y]
+                        west [(dec x) y])]
+    (-> labyrinth
+        (assoc-in [:player :x] new-x)
+        (assoc-in [:player :y] new-y)
+        (assoc-in [:maze new-y new-x] (empty-cell)))))
 
 ;; turning around
 (defn turn-right [{:keys [player] :as labyrinth}]
