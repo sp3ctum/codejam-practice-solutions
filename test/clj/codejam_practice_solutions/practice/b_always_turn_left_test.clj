@@ -11,10 +11,11 @@
          (maze/parse-input "WWWWWWWWWLW WRWWWWWWWWW"))))
 
 (deftest create-unsolved-labyrinth
-  (is (= (parse-maze ["v░░░"
-                      "░░░░"
-                      "░░░░"
-                      "░░░░"])
+  (is (= (parse-maze ["░⎕v⎕░"
+                      "░░░░░"
+                      "░░░░░"
+                      "░░░░░"
+                      "░░░░░"])
          (maze/create-unsolved-labyrinth "WW"))))
 
 (deftest replace-char
@@ -23,10 +24,11 @@
   (is (= "abC" (maze/replace-char "abc" 2 "C"))))
 
 (deftest render-labyrinth
-  (is (= ["v░░░"
-          "░░░░"
-          "░░░░"
-          "░░░░"]
+  (is (= ["░⎕v⎕░"
+          "░░░░░"
+          "░░░░░"
+          "░░░░░"
+          "░░░░░"]
          (maze/render-labyrinth (maze/create-unsolved-labyrinth "WW"))))
   (is (= ["░░░░"
           "░v░░"
@@ -49,15 +51,15 @@
     ">" (maze/empty-cell)))
 
 (defn parse-player-position [maze]
-  (let [[x y cell] (first (for [[row-index row] (map vector (range) maze)
-                                [cell-index cell] (map vector (range) row)
-                                :when (some #(when (= % cell) %) "<A>v")]
-                            [cell-index row-index cell]))]
+  (let [[column row cell] (first (for [[row-index row] (map vector (range) maze)
+                                       [cell-index cell] (map vector (range) row)
+                                       :when (some #(when (= % cell) %) "<A>v")]
+                                   [cell-index row-index cell]))]
     (condp = cell
-      \A (maze/player-at x y maze/north)
-      \v (maze/player-at x y maze/south)
-      \< (maze/player-at x y maze/west)
-      \> (maze/player-at x y maze/east)
+      \A (maze/player-at row column maze/north)
+      \v (maze/player-at row column maze/south)
+      \< (maze/player-at row column maze/west)
+      \> (maze/player-at row column maze/east)
       nil)))
 
 (deftest parse-player-position-test
@@ -143,70 +145,93 @@
            [{:type :wall} {:type :empty} {:type :unknown}]],
           :player {:y 0, :facing :north, :x 1}})))
 
-(deftest move-right
-  (is (= (maze/render-labyrinth (maze/move-right
+(deftest turn-right
+  (is (= (maze/render-labyrinth (maze/turn-right
                                  (parse-maze ["░░░░"
                                               "░<░░"
                                               "░░░░"
-                                              "░░░░"]))) ["░A░░"
-                                                          "⎕ ░░"
+                                              "░░░░"]))) ["░░░░"
+                                                          "░A░░"
                                                           "⎕⎕░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/move-right
+  (is (= (maze/render-labyrinth (maze/turn-right
                                  (parse-maze ["░░░░"
                                               "░A░░"
                                               "░░░░"
-                                              "░░░░"]))) ["⎕⎕░░"
-                                                          "⎕ >░"
+                                              "░░░░"]))) ["⎕░░░"
+                                                          "⎕>░░"
                                                           "░░░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/move-right
+  (is (= (maze/render-labyrinth (maze/turn-right
                                  (parse-maze ["░░░░"
                                               "░>░░"
                                               "░░░░"
                                               "░░░░"]))) ["░⎕⎕░"
-                                                          "░ ⎕░"
                                                           "░v░░"
+                                                          "░░░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/move-right
+  (is (= (maze/render-labyrinth (maze/turn-right
                                  (parse-maze ["░░░░"
                                               "░v░░"
                                               "░░░░"
                                               "░░░░"]))) ["░░░░"
-                                                          "< ⎕░"
-                                                          "░⎕⎕░"
+                                                          "░<⎕░"
+                                                          "░░⎕░"
                                                           "░░░░"])))
 
-(deftest move-left
+(deftest turn-left
   (is (= (maze/render-labyrinth
-          (maze/move-left (parse-maze ["░░░░"
+          (maze/turn-left (parse-maze ["░░░░"
                                        "░A░░"
                                        "░░░░"
                                        "░░░░"]))) ["░░░░"
-                                                   "< ░░"
+                                                   "░<░░"
                                                    "░░░░"
                                                    "░░░░"]))
   (is (= (maze/render-labyrinth
-          (maze/move-left (parse-maze ["░░░░"
+          (maze/turn-left (parse-maze ["░░░░"
                                        "░>░░"
                                        "░░░░"
-                                       "░░░░"]))) ["░A░░"
-                                                   "░ ░░"
+                                       "░░░░"]))) ["░░░░"
+                                                   "░A░░"
                                                    "░░░░"
                                                    "░░░░"]))
   (is (= (maze/render-labyrinth
-          (maze/move-left (parse-maze ["░░░░"
+          (maze/turn-left (parse-maze ["░░░░"
                                        "░v░░"
                                        "░░░░"
                                        "░░░░"]))) ["░░░░"
-                                                   "░ >░"
+                                                   "░>░░"
                                                    "░░░░"
                                                    "░░░░"]))
   (is (= (maze/render-labyrinth
-          (maze/move-left (parse-maze ["░░░░"
+          (maze/turn-left (parse-maze ["░░░░"
                                        "░<░░"
                                        "░░░░"
                                        "░░░░"]))) ["░░░░"
-                                                   "░ ░░"
                                                    "░v░░"
+                                                   "░░░░"
                                                    "░░░░"])))
+
+(deftest move-route
+  (is (= ["░⎕ ⎕░"
+          "░░ ⎕░"
+          "░░v░░"
+          "░░░░░"
+          "░░░░░"]
+         (maze/render-labyrinth
+          (maze/move-route
+           (maze/create-unsolved-labyrinth "WW")
+           "WW")))))
+
+(deftest move-route-and-back
+  (is (= ["░⎕A⎕░"
+          "░⎕ ⎕░"
+          "░⎕ ⎕░"
+          "░░░░░"
+          "░░░░░"]
+         (maze/render-labyrinth
+          (maze/move-route-and-back (maze/parse-input "WW WW"))))))
+
+(deftest longest
+  (is (= [[3 "abc"] [2 "ab"]] (maze/longest "abc" "ab"))))

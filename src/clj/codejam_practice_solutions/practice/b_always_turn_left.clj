@@ -4,9 +4,9 @@
 (ns codejam-practice-solutions.practice.b-always-turn-left
   (:require [clojure.string :as s]))
 
-(defonce forward "W") ; w for walk
-(defonce right "R")
-(defonce left "L")
+(def forward \W) ; w for walk
+(def right \R)
+(def left \L)
 
 (defn unknown-cell [] {:type :unknown})
 (defn wall-cell [] {:type :wall})
@@ -27,20 +27,25 @@
     {:forward entrance-to-exit
      :backward exit-to-entrance}))
 
-(defn player-at [x y facing]
-  {:x x, :y y, :facing facing})
+(defn player-at [row column facing]
+  {:x column, :y row, :facing facing})
 
 (defn replace-char [string position char]
   (str (subs string 0 position) char (subs string (inc position))))
 
 (defn create-unsolved-labyrinth [input]
-  (let [maze-cells (vec (for [x (range (* 2 (count input)))]
+  (let [maze-cells (vec (for [row (range (inc (* 2 (count input))))]
                           (vec
-                           (for [y (range (* 2 (count input)))]
-                             (unknown-cell)))))]
+                           (for [column (range (inc (* 2 (count input))))]
+                             (unknown-cell)))))
+        [row column] [0 (inc (unchecked-divide-int 3 2))]]
 
-    {:player (player-at 0 0 south)
-     :maze (assoc-in maze-cells [0 0] (empty-cell))}))
+    {:player (player-at row column south)
+     :maze (-> maze-cells
+               ;; around the player are always walls
+               (assoc-in [row (dec column)] (wall-cell))
+               (assoc-in [row column] (empty-cell))
+               (assoc-in [row (inc column)] (wall-cell)))}))
 
 (defn render-player [player maze]
   (let [player-symbol (condp = (:facing player)
@@ -105,7 +110,7 @@
         (assoc-in [:maze new-y new-x] (empty-cell)))))
 
 ;; turning around
-(defn turn-right [{:keys [player] :as labyrinth}]
+(defn turn-player-right [{:keys [player] :as labyrinth}]
   (assoc-in labyrinth [:player :facing]
             (condp = (:facing player)
               north east
@@ -115,24 +120,46 @@
 
 (defn turn-left [labyrinth]
   (-> labyrinth
-      turn-right
-      turn-right
-      turn-right))
+      turn-player-right
+      turn-player-right
+      turn-player-right))
 
-;; entire moves
 (defn move-forward [labyrinth]
   (-> labyrinth
       mark-wall-at-player-left
       move-player-forward))
 
-(defn move-right [labyrinth]
+(defn turn-right [labyrinth]
   (-> labyrinth
       mark-wall-at-player-left
       mark-wall-at-player-left-top
-      turn-right
-      move-forward))
+      turn-player-right))
 
-(defn move-left [labyrinth]
+(defn move-route [labyrinth route]
+  (reduce (fn [result direction]
+            (condp = direction
+              forward (move-forward result)
+              right (turn-right result)
+              left (turn-left result)))
+          labyrinth
+          (seq route)))
+
+(defn longest [& strings]
+  (sort-by first >
+           (map (juxt count identity) strings)))
+
+(defn turn-around-at-end-of-labyrinth
+  "Since a labyrinth always ends when turning around, marks walls to
+  the sides of the player."
+  [labyrinth]
   (-> labyrinth
-      turn-left
-      move-player-forward))
+      mark-wall-at-player-left
+      turn-player-right
+      turn-player-right
+      mark-wall-at-player-left))
+
+(defn move-route-and-back [{:keys [forward backward]}]
+  (-> (create-unsolved-labyrinth (longest forward backward))
+      (move-route forward)
+      turn-around-at-end-of-labyrinth
+      (move-route backward)))
