@@ -33,12 +33,12 @@
 (defn replace-char [string position char]
   (str (subs string 0 position) char (subs string (inc position))))
 
-(defn create-unsolved-labyrinth [input]
-  (let [maze-cells (vec (for [row (range (inc (* 2 (count input))))]
+(defn create-unsolved-labyrinth [route]
+  (let [maze-cells (vec (for [row (range (inc (* 2 (count route))))]
                           (vec
-                           (for [column (range (inc (* 2 (count input))))]
+                           (for [column (range (inc (* 2 (count route))))]
                              (unknown-cell)))))
-        [row column] [0 (inc (unchecked-divide-int 3 2))]]
+        [row column] [0 (count route)]]
 
     {:player (player-at row column south)
      :maze (-> maze-cells
@@ -88,9 +88,12 @@
       get-cell-in-front-of-player
       get-cell-to-the-left-of-player))
 
-(defn mark-wall-at-player-left [{:keys [player] :as labyrinth}]
-  (let [{:keys [x y]} (get-cell-to-the-left-of-player player)]
-    (assoc-in labyrinth [:maze y x] (wall-cell))))
+(defn mark-unknown-as-wall-at-player-left [{:keys [player] :as labyrinth}]
+  (let [{:keys [x y]} (get-cell-to-the-left-of-player player)
+        cell (get-in labyrinth [:maze y x])]
+    (if (= (:type cell) :unknown)
+      (assoc-in labyrinth [:maze y x] (wall-cell))
+      labyrinth)))
 
 (defn mark-wall-at-player-left-top [{:keys [player] :as labyrinth}]
   (let [{:keys [x y]} (get-cell-to-the-top-left-of-player player)]
@@ -126,12 +129,12 @@
 
 (defn move-forward [labyrinth]
   (-> labyrinth
-      mark-wall-at-player-left
+      mark-unknown-as-wall-at-player-left
       move-player-forward))
 
 (defn turn-right [labyrinth]
   (-> labyrinth
-      mark-wall-at-player-left
+      mark-unknown-as-wall-at-player-left
       mark-wall-at-player-left-top
       turn-player-right))
 
@@ -145,18 +148,20 @@
           (seq route)))
 
 (defn longest [& strings]
-  (sort-by first >
-           (map (juxt count identity) strings)))
+  (-> (sort-by first >
+               (map (juxt count identity) strings))
+      first
+      second))
 
 (defn turn-around-at-end-of-labyrinth
   "Since a labyrinth always ends when turning around, marks walls to
   the sides of the player."
   [labyrinth]
   (-> labyrinth
-      mark-wall-at-player-left
+      mark-unknown-as-wall-at-player-left
       turn-player-right
       turn-player-right
-      mark-wall-at-player-left))
+      mark-unknown-as-wall-at-player-left))
 
 (defn move-route-and-back [{:keys [forward backward]}]
   (-> (create-unsolved-labyrinth (longest forward backward))

@@ -11,12 +11,27 @@
          (maze/parse-input "WWWWWWWWWLW WRWWWWWWWWW"))))
 
 (deftest create-unsolved-labyrinth
-  (is (= (parse-maze ["░⎕v⎕░"
-                      "░░░░░"
-                      "░░░░░"
-                      "░░░░░"
-                      "░░░░░"])
-         (maze/create-unsolved-labyrinth "WW"))))
+  (is (= (parse-maze ["░░⎕v⎕░░"
+                      "░░░░░░░"
+                      "░░░░░░░"
+                      "░░░░░░░"
+                      "░░░░░░░"
+                      "░░░░░░░"
+                      "░░░░░░░"])
+         (maze/create-unsolved-labyrinth "WWW")))
+  (is (= (parse-maze
+          ["░░░░⎕v⎕░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"
+           "░░░░░░░░░░░"])
+         (maze/create-unsolved-labyrinth "WWWWW"))))
 
 (deftest replace-char
   (is (= "Abc" (maze/replace-char "abc" 0 "A")))
@@ -93,12 +108,20 @@
          (parse-maze ["░░░░"
                       "░v░░"]))))
 
-(deftest mark-wall-at-player-left
-  (is (= (maze/render-labyrinth (maze/mark-wall-at-player-left
+(deftest mark-unknown-as-wall-at-player-left
+  (is (= (maze/render-labyrinth (maze/mark-unknown-as-wall-at-player-left
                                  (parse-maze ["░░░░"
                                               "░>░░"
                                               "░░░░"
                                               "░░░░"]))) ["░⎕░░"
+                                                          "░>░░"
+                                                          "░░░░"
+                                                          "░░░░"]))
+  (is (= (maze/render-labyrinth (maze/mark-unknown-as-wall-at-player-left
+                                 (parse-maze ["░ ░░"
+                                              "░>░░"
+                                              "░░░░"
+                                              "░░░░"]))) ["░ ░░"
                                                           "░>░░"
                                                           "░░░░"
                                                           "░░░░"])))
@@ -222,7 +245,27 @@
          (maze/render-labyrinth
           (maze/move-route
            (maze/create-unsolved-labyrinth "WW")
-           "WW")))))
+           "WW"))))
+  (is (= ["░░⎕ ⎕░░"
+          "░░░ >░░"
+          "░░░░░░░"
+          "░░░░░░░"
+          "░░░░░░░"
+          "░░░░░░░"
+          "░░░░░░░"]
+         (maze/render-labyrinth
+          (maze/move-route
+           (maze/create-unsolved-labyrinth "WLW")
+           "WLW")))))
+
+;; TODO I'm representing the maze incorrectly.
+;; each cell must be allowed to have walls on any side.
+(comment
+  (let [route "WRWWLWWLWW"]
+    (maze/render-labyrinth
+     (maze/move-route
+      (maze/create-unsolved-labyrinth route)
+      route))))
 
 (deftest move-route-and-back
   (is (= ["░⎕A⎕░"
@@ -234,4 +277,4 @@
           (maze/move-route-and-back (maze/parse-input "WW WW"))))))
 
 (deftest longest
-  (is (= [[3 "abc"] [2 "ab"]] (maze/longest "abc" "ab"))))
+  (is (= "abc" (maze/longest "abc" "ab"))))
