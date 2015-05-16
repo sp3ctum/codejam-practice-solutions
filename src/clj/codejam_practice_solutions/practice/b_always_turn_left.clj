@@ -36,16 +36,17 @@
 (defn create-unsolved-labyrinth [route]
   (let [maze-cells (vec (for [row (range (inc (* 2 (count route))))]
                           (vec
-                           (for [column (range (inc (* 2 (count route))))]
+                           (for [column (range (inc (* 2 (inc (count route)))))]
                              (unknown-cell)))))
-        [row column] [0 (count route)]]
+        [row column] [0 (inc (count route))]]
 
     {:player (player-at row column south)
      :maze (-> maze-cells
-               ;; around the player are always walls
-               (assoc-in [row (dec column)] (wall-cell))
+               ;; ahead of the player are always walls
+               (assoc-in [1 (dec column)] (wall-cell))
                (assoc-in [row column] (empty-cell))
-               (assoc-in [row (inc column)] (wall-cell)))}))
+               (assoc-in [1 column] (empty-cell))
+               (assoc-in [1 (inc column)] (wall-cell)))}))
 
 (defn render-player [player maze]
   (let [player-symbol (condp = (:facing player)
@@ -63,10 +64,23 @@
     :wall "⎕"
     :empty " "))
 
+;; TODO skip rows that have only unknown cells
+;; TODO skip columns that have only unknown cells too
 (defn render-labyrinth [{:keys [maze player] :as labyrinth}]
   (let [rows (vec (for [row maze]
                     (s/join (map render-cell row))))]
     (render-player player rows)))
+
+;; all walls are the same size (the maze is always a square)
+(defn render-empty-labyrinth [wall-length]
+  (let [wall-length (inc (* wall-length 2))]
+    (vec (for [row (range wall-length)]
+           (s/join (repeat wall-length (render-cell (unknown-cell))))))))
+
+(defn get-cells-with-coordinates [maze]
+  (for [[row-index row] (map vector (range) maze)
+        [cell-index cell] (map vector (range) row)]
+    [row-index cell-index cell]))
 
 ;; cell retrieval
 (defn get-cell-in-front-of-player [{:keys [x y facing] :as player}]
@@ -130,6 +144,8 @@
 (defn move-forward [labyrinth]
   (-> labyrinth
       mark-unknown-as-wall-at-player-left
+      move-player-forward
+      mark-unknown-as-wall-at-player-left
       move-player-forward))
 
 (defn turn-right [labyrinth]
@@ -150,8 +166,8 @@
 (defn longest [& strings]
   (-> (sort-by first >
                (map (juxt count identity) strings))
-      first
-      second))
+      first ; -> e.g. [3 "abc"]
+      second)) ; -> "abc"
 
 (defn turn-around-at-end-of-labyrinth
   "Since a labyrinth always ends when turning around, marks walls to
