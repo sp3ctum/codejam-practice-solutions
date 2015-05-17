@@ -64,23 +64,63 @@
     :wall "⎕"
     :empty " "))
 
-;; TODO skip rows that have only unknown cells
-;; TODO skip columns that have only unknown cells too
+(defn non-unknown-rows [{:keys [maze] :as labyrinth}]
+  (let [new-maze
+        (filter (fn [cells]
+                  (not (every? #(= (:type %) :unknown)
+                               cells)))
+                maze)]
+    (assoc labyrinth :maze new-maze)))
+
+(defn get-cells-with-coordinates [maze]
+  (for [[row-index row] (map vector (range) maze)
+        [cell-index cell] (map vector (range) row)]
+    [row-index cell-index cell]))
+
+(defn first-non-unknown-index [maze]
+  (let [indices
+        (map #(->> %
+                   (map vector (range))
+                   (some (fn [[column-number cell]]
+                           (when (not (= :unknown (:type cell)))
+                             column-number))))
+             maze)]
+    (apply min (filter (comp not nil?)
+                       indices))))
+
+(defn only-non-unknown-columns [{:keys [maze player] :as labyrinth}]
+  (let [row-length (count (first maze))
+        earliest-column (first-non-unknown-index maze)
+        latest-column (first-non-unknown-index (map reverse maze))
+        new-maze (map (fn [row] (take (+ 3 (- latest-column earliest-column))
+                                      (drop earliest-column row)))
+                      maze)
+        new-player (update-in player [:x] - earliest-column)]
+    (-> labyrinth
+        (assoc :maze new-maze)
+        (assoc :player new-player))))
+
+(defn compress-labyrinth [labyrinth]
+  (->> labyrinth
+       non-unknown-rows
+       only-non-unknown-columns))
+
 (defn render-labyrinth [{:keys [maze player] :as labyrinth}]
   (let [rows (vec (for [row maze]
                     (s/join (map render-cell row))))]
     (render-player player rows)))
+
+(defn render-compressed-labyrinth [labyrinth]
+  (let [compressed-labyrinth (compress-labyrinth labyrinth)
+        rendered-maze (vec (for [row (:maze compressed-labyrinth)]
+                             (s/join (map render-cell row))))]
+    (render-player (:player compressed-labyrinth) rendered-maze)))
 
 ;; all walls are the same size (the maze is always a square)
 (defn render-empty-labyrinth [wall-length]
   (let [wall-length (inc (* wall-length 2))]
     (vec (for [row (range wall-length)]
            (s/join (repeat wall-length (render-cell (unknown-cell))))))))
-
-(defn get-cells-with-coordinates [maze]
-  (for [[row-index row] (map vector (range) maze)
-        [cell-index cell] (map vector (range) row)]
-    [row-index cell-index cell]))
 
 ;; cell retrieval
 (defn get-cell-in-front-of-player [{:keys [x y facing] :as player}]
@@ -166,7 +206,7 @@
 (defn longest [& strings]
   (-> (sort-by first >
                (map (juxt count identity) strings))
-      first ; -> e.g. [3 "abc"]
+      first ; -> e.g. [3 abc"]
       second)) ; -> "abc"
 
 (defn turn-around-at-end-of-labyrinth
