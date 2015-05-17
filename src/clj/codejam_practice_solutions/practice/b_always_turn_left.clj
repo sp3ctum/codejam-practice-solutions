@@ -118,12 +118,19 @@
        non-unknown-rows
        only-non-unknown-columns))
 
-(defn render-labyrinth [{:keys [maze player] :as labyrinth}]
+(defn render-labyrinth
+  "Render a debug version of the labyrinth. Draws the player and all
+  cells present in the labyrinth without removing anything."
+  [{:keys [maze player] :as labyrinth}]
   (let [rows (vec (for [row maze]
                     (s/join (map render-cell row))))]
     (render-player player rows)))
 
-(defn render-compressed-labyrinth [labyrinth]
+(defn render-compressed-labyrinth
+  "Used to render a problem result set. Removes extra padding in the
+  labyrinth, and does not render the player. If you want raw data, use
+  render-labyrinth instead."
+  [labyrinth]
   (let [compressed-labyrinth (compress-labyrinth labyrinth)
         rendered-maze (vec (for [row (:maze compressed-labyrinth)]
                              (s/join (map render-cell row))))]
