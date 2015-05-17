@@ -105,7 +105,9 @@
   (let [row-length (count (first maze))
         earliest-column (first-non-unknown-index maze)
         latest-column (first-non-unknown-index (map reverse maze))
-        new-maze (map (fn [row] (take (+ 3 (- latest-column earliest-column))
+        new-maze (map (fn [row] (take (- row-length
+                                         latest-column
+                                         earliest-column)
                                       (drop earliest-column row)))
                       maze)
         new-player (update-in player [:x] - earliest-column)]

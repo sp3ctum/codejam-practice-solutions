@@ -301,13 +301,20 @@
            (maze/create-unsolved-labyrinth "WLW")
            "WLW")))))
 
+(defn render-compressed-route [route-and-back & debug?]
+  (let [labyrinth
+        (-> route-and-back
+            maze/parse-input
+            maze/move-route-and-back)]
+    (if debug?
+      (maze/render-labyrinth labyrinth)
+      (maze/render-compressed-labyrinth labyrinth))))
+
 (deftest move-route-and-back
-  (is (= 
-       ["⎕ ⎕"
-        "⎕ ⎕"
-        "⎕ ⎕"]
-       (maze/render-compressed-labyrinth
-        (maze/move-route-and-back (maze/parse-input "WW WW")))))
+  (is (= ["⎕ ⎕"
+          "⎕ ⎕"
+          "⎕ ⎕"]
+         (render-compressed-route "WW WW")))
 
   (is (= ["⎕⎕⎕⎕⎕ ⎕"
           "⎕     ⎕"
@@ -320,9 +327,43 @@
           "⎕ ⎕⎕⎕ ⎕"
           "⎕     ⎕"
           "⎕⎕⎕⎕⎕⎕⎕"]
-         (maze/render-compressed-labyrinth
-          (maze/move-route-and-back
-           (maze/parse-input "WRWWLWWLWWLWLWRRWRWWWRWWRWLW WWRRWLWLWWLWWLWWRWWRWWLW"))))))
+         (render-compressed-route
+          "WRWWLWWLWWLWLWRRWRWWWRWWRWLW WWRRWLWLWWLWWLWWRWWRWWLW")))
+
+  (is (= ["⎕⎕⎕⎕⎕ ⎕ ⎕⎕⎕"
+          "⎕     ⎕   ⎕"
+          "⎕⎕⎕ ⎕ ⎕⎕⎕ ⎕"
+          "⎕   ⎕ ⎕ ⎕ ⎕"
+          "⎕ ⎕ ⎕ ⎕ ⎕ ⎕"
+          "⎕ ⎕ ⎕     ⎕"
+          "⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕"]
+         (render-compressed-route
+          "WWWLWLWRRWLWLWWLWRW WLWRWWRWWRWWLWLWWRRWLWLWRRWRWLWLWRRWWLW")))
+
+  (is (= ["⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕ ⎕⎕⎕"
+          "⎕   ⎕ ⎕ ⎕ ⎕ ⎕ ⎕"
+          "⎕⎕⎕ ⎕ ⎕ ⎕ ⎕ ⎕ ⎕"
+          "⎕     ⎕ ⎕     ⎕"
+          "⎕ ⎕⎕⎕ ⎕ ⎕ ⎕⎕⎕⎕⎕"
+          "⎕ ⎕       ⎕ ⎕ ⎕"
+          "⎕ ⎕ ⎕ ⎕⎕⎕ ⎕ ⎕ ⎕"
+          "⎕ ⎕ ⎕   ⎕ ⎕   ⎕"
+          "⎕ ⎕⎕⎕⎕⎕ ⎕ ⎕ ⎕ ⎕"
+          "⎕ ⎕     ⎕   ⎕  "
+          "⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕⎕"]
+         (render-compressed-route (str "WWLWLWRRWRWWLW"
+                                       "WWLWLWWRRWLWLWRRWWLW " ; space
+                                       "WRWLWLWRWRWWLWWLWLWRWRWW"
+                                       "RRWWLWLWRWLWLWRRWRWLWLWW"
+                                       "LWWWRRWWWRWLWLWRRWRWLWLW"
+                                       "RRWWLWLWWRRWWLWLWWRRWLWLWW")))))
+
+;; for testing output by skimming the results manually in order to
+;; locate more problems
+(comment
+  (map-indexed (fn [i route]
+                 [(inc i) route (render-compressed-route route)])
+               (drop 1 maze/input-small)))
 
 (deftest longest
   (is (= "abc" (maze/longest "abc" "ab"))))
@@ -396,4 +437,12 @@
                         "░░⎕ ⎕░░"
                         "░░   ░░"
                         "░░░░░░░"
-                        "░░░░░░░"]))))))
+                        "░░░░░░░"])))))
+
+  (is (= nil
+         )))
+
+
+
+
+
