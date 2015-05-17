@@ -307,20 +307,37 @@
         "⎕ ⎕"
         "⎕ ⎕"]
        (maze/render-compressed-labyrinth
-        (maze/move-route-and-back (maze/parse-input "WW WW"))))))
+        (maze/move-route-and-back (maze/parse-input "WW WW")))))
+
+  (is (= ["⎕⎕⎕⎕⎕ ⎕"
+          "⎕     ⎕"
+          "⎕ ⎕⎕⎕⎕⎕"
+          "⎕ ⎕   ⎕"
+          "⎕ ⎕⎕⎕ ⎕"
+          "⎕     ⎕"
+          "⎕⎕⎕⎕⎕ ⎕"
+          "    ⎕ ⎕"
+          "⎕ ⎕⎕⎕ ⎕"
+          "⎕     ⎕"
+          "⎕⎕⎕⎕⎕⎕⎕"]
+         (maze/render-compressed-labyrinth
+          (maze/move-route-and-back
+           (maze/parse-input "WRWWLWWLWWLWLWRRWRWWWRWWRWLW WWRRWLWLWWLWWLWWRWWRWWLW"))))))
 
 (deftest longest
   (is (= "abc" (maze/longest "abc" "ab"))))
 
 (deftest non-unknown-row
   (is (= (count (:maze (maze/non-unknown-rows
-                        (parse-maze ["░░⎕ ⎕░░"
+                        (parse-maze ["░░   ░░"
                                      "░░⎕ ⎕░░"
                                      "░░⎕ ⎕░░"
-                                     "░░⎕⎕⎕░░"
-                                     "░░░░░░░"
+                                     "░░⎕ ⎕░░"
+                                     "░░⎕ ⎕░░"
+                                     "░░⎕ ⎕░░"
+                                     "░░   ░░"
                                      "░░░░░░░"]))))
-         4)))
+         5)))
 
 (deftest get-cells-with-coordinates
   (is (= [[0 0 \░] [0 1 \░] [0 2 \░]
@@ -334,7 +351,8 @@
 (deftest first-non-unknown-index
   (is (= 2
          (maze/first-non-unknown-index
-          (:maze (parse-maze ["░░⎕A⎕░░"
+          (:maze (parse-maze ["░░ A ░░"
+                              "░░⎕ ⎕░░"
                               "░░⎕ ⎕░░"
                               "░░⎕ ⎕░░"
                               "░░   ░░"
@@ -344,14 +362,14 @@
 (deftest only-non-unknown-columns
   (is (= ["⎕ ⎕"
           "⎕ ⎕"
-          "⎕ ⎕"
-          "⎕⎕⎕"] 
+          "⎕ ⎕"]
          (maze/render-compressed-labyrinth
           (maze/only-non-unknown-columns
-           (parse-maze ["░░⎕A⎕░░"
+           (parse-maze ["░░ A ░░"
                         "░░⎕ ⎕░░"
                         "░░⎕ ⎕░░"
-                        "░░⎕⎕⎕░░"]))))))
+                        "░░⎕ ⎕░░"
+                        "░░   ░░"]))))))
 
 (deftest non-unknown-rows
   (is (= ["⎕ ⎕"
@@ -368,10 +386,12 @@
 
 (deftest compress-maze
   (is (= ["⎕ ⎕"
+          "⎕ ⎕"
           "⎕ ⎕"]
          (maze/render-compressed-labyrinth
           (maze/compress-labyrinth
            (parse-maze ["░░ A ░░"
+                        "░░⎕ ⎕░░"
                         "░░⎕ ⎕░░"
                         "░░⎕ ⎕░░"
                         "░░   ░░"
