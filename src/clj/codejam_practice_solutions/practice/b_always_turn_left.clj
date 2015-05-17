@@ -42,11 +42,22 @@
 
     {:player (player-at row column south)
      :maze (-> maze-cells
-               ;; ahead of the player are always walls
+               ;; ahead of the player are always walls on both sides
                (assoc-in [1 (dec column)] (wall-cell))
+               (assoc-in [1 (inc column)] (wall-cell))
+
+               ;; On the sides of the player are always empty cells
+               ;; to prevent them from being marked as walls.
+               ;;
+               ;; This would mess up reporting the results since the
+               ;; cells next to the player in the beginning are not
+               ;; included in the result by specification.
+               (assoc-in [0 (dec column)] (empty-cell))
+               (assoc-in [0 (inc column)] (empty-cell))
+
+               ;; under and in front of the player are empty-cells
                (assoc-in [row column] (empty-cell))
-               (assoc-in [1 column] (empty-cell))
-               (assoc-in [1 (inc column)] (wall-cell)))}))
+               (assoc-in [1 column] (empty-cell)))}))
 
 (defn render-player [player maze]
   (let [player-symbol (condp = (:facing player)
@@ -67,7 +78,8 @@
 (defn non-unknown-rows [{:keys [maze] :as labyrinth}]
   (let [new-maze
         (filter (fn [cells]
-                  (not (every? #(= (:type %) :unknown)
+                  (not (every? #(or (= (:type %) :unknown)
+                                    (= (:type %) :empty))
                                cells)))
                 maze)]
     (assoc labyrinth :maze new-maze)))
@@ -82,7 +94,8 @@
         (map #(->> %
                    (map vector (range))
                    (some (fn [[column-number cell]]
-                           (when (not (= :unknown (:type cell)))
+                           (when (not (or (= :unknown (:type cell))
+                                          (= :empty (:type cell))))
                              column-number))))
              maze)]
     (apply min (filter (comp not nil?)
@@ -114,13 +127,7 @@
   (let [compressed-labyrinth (compress-labyrinth labyrinth)
         rendered-maze (vec (for [row (:maze compressed-labyrinth)]
                              (s/join (map render-cell row))))]
-    (render-player (:player compressed-labyrinth) rendered-maze)))
-
-;; all walls are the same size (the maze is always a square)
-(defn render-empty-labyrinth [wall-length]
-  (let [wall-length (inc (* wall-length 2))]
-    (vec (for [row (range wall-length)]
-           (s/join (repeat wall-length (render-cell (unknown-cell))))))))
+    rendered-maze))
 
 ;; cell retrieval
 (defn get-cell-in-front-of-player [{:keys [x y facing] :as player}]
@@ -147,6 +154,13 @@
         cell (get-in labyrinth [:maze y x])]
     (if (= (:type cell) :unknown)
       (assoc-in labyrinth [:maze y x] (wall-cell))
+      labyrinth)))
+
+(defn mark-unknown-as-empty-at-player-left [{:keys [player] :as labyrinth}]
+  (let [{:keys [x y]} (get-cell-to-the-left-of-player player)
+        cell (get-in labyrinth [:maze y x])]
+    (if (= (:type cell) :unknown)
+      (assoc-in labyrinth [:maze y x] (empty-cell))
       labyrinth)))
 
 (defn mark-wall-at-player-left-top [{:keys [player] :as labyrinth}]
@@ -214,10 +228,10 @@
   the sides of the player."
   [labyrinth]
   (-> labyrinth
-      mark-unknown-as-wall-at-player-left
+      mark-unknown-as-empty-at-player-left
       turn-player-right
       turn-player-right
-      mark-unknown-as-wall-at-player-left))
+      mark-unknown-as-empty-at-player-left))
 
 (defn move-route-and-back [{:keys [forward backward]}]
   (-> (create-unsolved-labyrinth (longest forward backward))

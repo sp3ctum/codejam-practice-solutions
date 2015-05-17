@@ -19,9 +19,9 @@
   (is (= {:player {:x 2, :y 0, :facing :south},
           :maze
           [[{:type :unknown}
-            {:type :unknown}
             {:type :empty}
-            {:type :unknown}
+            {:type :empty}
+            {:type :empty}
             {:type :unknown}]
            [{:type :unknown}
             {:type :wall}
@@ -35,19 +35,15 @@
             {:type :unknown}]]}
          (maze/create-unsolved-labyrinth "W")))
 
-  (is (= ["░░░v░░░"
+  (is (= ["░░ v ░░"
           "░░⎕ ⎕░░"
           "░░░░░░░"
           "░░░░░░░"
           "░░░░░░░"]
          (maze/render-labyrinth (maze/create-unsolved-labyrinth "WW")))))
 
-(deftest render-empty-labyrinth
-  (is (= ["░░░░░" "░░░░░" "░░░░░" "░░░░░" "░░░░░"]
-         (maze/render-empty-labyrinth 2))))
-
 (deftest render-labyrinth
-  (is (= ["░░░v░░░"
+  (is (= ["░░ v ░░"
           "░░⎕ ⎕░░"
           "░░░░░░░"
           "░░░░░░░"
@@ -55,29 +51,28 @@
          (maze/render-labyrinth (maze/create-unsolved-labyrinth "WW")))))
 
 (deftest render-compressed-labyrinth
-  (is (= ["░░░░░░A⎕"
-          "░⎕⎕⎕⎕⎕ ⎕"
-          "░⎕     ⎕"
-          "░⎕ ⎕⎕⎕⎕⎕"
-          "░⎕ ⎕   ⎕"
-          "░⎕ ⎕⎕⎕ ⎕"
-          "░⎕     ⎕"
-          "⎕⎕⎕⎕⎕⎕ ⎕"
-          "     ⎕ ⎕"
-          "⎕⎕ ⎕⎕⎕ ⎕"
-          "░⎕     ⎕"
-          "░⎕⎕⎕⎕⎕⎕⎕"]
+  (is (= ["⎕⎕⎕⎕⎕ ⎕"
+          "⎕     ⎕"
+          "⎕ ⎕⎕⎕⎕⎕"
+          "⎕ ⎕   ⎕"
+          "⎕ ⎕⎕⎕ ⎕"
+          "⎕     ⎕"
+          "⎕⎕⎕⎕⎕ ⎕"
+          "    ⎕ ⎕"
+          "⎕ ⎕⎕⎕ ⎕"
+          "⎕     ⎕"
+          "⎕⎕⎕⎕⎕⎕⎕"]
          (maze/render-compressed-labyrinth
-          (parse-maze ["░░░░░░░░░░░░░░░A⎕░░░░░░░░░░░░░░"
+          (parse-maze ["░░░░░░░░░░░░░░░A ░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕⎕⎕⎕⎕ ⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕     ⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕ ⎕⎕⎕⎕⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕ ⎕   ⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕ ⎕⎕⎕ ⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕     ⎕░░░░░░░░░░░░░░"
-                       "░░░░░░░░░⎕⎕⎕⎕⎕⎕ ⎕░░░░░░░░░░░░░░"
+                       "░░░░░░░░░ ⎕⎕⎕⎕⎕ ⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░     ⎕ ⎕░░░░░░░░░░░░░░"
-                       "░░░░░░░░░⎕⎕ ⎕⎕⎕ ⎕░░░░░░░░░░░░░░"
+                       "░░░░░░░░░ ⎕ ⎕⎕⎕ ⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕     ⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕⎕⎕⎕⎕⎕⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"
@@ -155,6 +150,23 @@
                                                           "░░░░"
                                                           "░░░░"])))
 
+(deftest mark-unknown-as-wall-at-player-left
+  (is (= (maze/render-labyrinth (maze/mark-unknown-as-empty-at-player-left
+                                 (parse-maze ["░░░░"
+                                              "░>░░"
+                                              "░░░░"
+                                              "░░░░"]))) ["░ ░░"
+                                                          "░>░░"
+                                                          "░░░░"
+                                                          "░░░░"]))
+  (is (= (maze/render-labyrinth (maze/mark-unknown-as-empty-at-player-left
+                                 (parse-maze ["░ ░░"
+                                              "░>░░"
+                                              "░░░░"
+                                              "░░░░"]))) ["░ ░░"
+                                                          "░>░░"
+                                                          "░░░░"
+                                                          "░░░░"])))
 (deftest move-forward
   (is (= (maze/render-labyrinth (maze/move-forward
                                  (parse-maze ["░░░░"
@@ -268,7 +280,7 @@
                                                    "░░░░"])))
 
 (deftest move-route
-  (is (= ["░░░ ⎕░░"
+  (is (= ["░░   ░░"
           "░░⎕ ⎕░░"
           "░░░ ⎕░░"
           "░░░ ⎕░░"
@@ -277,7 +289,7 @@
           (maze/move-route
            (maze/create-unsolved-labyrinth "WW")
            "WW"))))
-  (is (= ["░░░░ ⎕░░░"
+  (is (= ["░░░   ░░░"
           "░░░⎕ ⎕░░░"
           "░░░░  >░░"
           "░░░░░░░░░"
@@ -291,12 +303,10 @@
 
 (deftest move-route-and-back
   (is (= 
-       ["░░░A⎕░░"
-        "░░⎕ ⎕░░"
-        "░░⎕ ⎕░░"
-        "░░⎕ ⎕░░"
-        "░░⎕ ⎕░░"]
-       (maze/render-labyrinth
+       ["⎕ ⎕"
+        "⎕ ⎕"
+        "⎕ ⎕"]
+       (maze/render-compressed-labyrinth
         (maze/move-route-and-back (maze/parse-input "WW WW"))))))
 
 (deftest longest
@@ -327,12 +337,12 @@
           (:maze (parse-maze ["░░⎕A⎕░░"
                               "░░⎕ ⎕░░"
                               "░░⎕ ⎕░░"
-                              "░░⎕⎕⎕░░"
+                              "░░   ░░"
                               "░░░░░░░"
                               "░░░░░░░"]))))))
 
 (deftest only-non-unknown-columns
-  (is (= ["⎕A⎕"
+  (is (= ["⎕ ⎕"
           "⎕ ⎕"
           "⎕ ⎕"
           "⎕⎕⎕"] 
@@ -344,29 +354,26 @@
                         "░░⎕⎕⎕░░"]))))))
 
 (deftest non-unknown-rows
-  (is (= ["⎕A⎕"
+  (is (= ["⎕ ⎕"
           "⎕ ⎕"
-          "⎕ ⎕"
-          "⎕⎕⎕"]
+          "⎕ ⎕"]
          (maze/render-compressed-labyrinth
           (maze/non-unknown-rows
-           (parse-maze ["⎕A⎕"
+           (parse-maze [" A " ; player will be ignored
                         "⎕ ⎕"
                         "⎕ ⎕"
-                        "⎕⎕⎕"
-                        "░░░"
+                        "⎕ ⎕"
+                        "   "
                         "░░░"]))))))
 
 (deftest compress-maze
-  (is (= ["⎕A⎕"
-          "⎕ ⎕"
-          "⎕ ⎕"
-          "⎕⎕⎕"]
+  (is (= ["⎕ ⎕"
+          "⎕ ⎕"]
          (maze/render-compressed-labyrinth
           (maze/compress-labyrinth
-           (parse-maze ["░░⎕A⎕░░"
+           (parse-maze ["░░ A ░░"
                         "░░⎕ ⎕░░"
                         "░░⎕ ⎕░░"
-                        "░░⎕⎕⎕░░"
+                        "░░   ░░"
                         "░░░░░░░"
                         "░░░░░░░"]))))))
