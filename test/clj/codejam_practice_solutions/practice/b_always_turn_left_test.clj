@@ -16,38 +16,36 @@
   (is (= "abC" (maze/replace-char "abc" 2 "C"))))
 
 (deftest create-unsolved-labyrinth
-  (is (= {:player {:x 2, :y 0, :facing :south},
+  (is (= {:player {:x 1, :y 0, :facing :south},
           :maze
-          [[{:type :unknown}
-            {:type :empty}
-            {:type :empty}
-            {:type :empty}
-            {:type :unknown}]
-           [{:type :unknown}
-            {:type :wall}
-            {:type :empty}
-            {:type :wall}
-            {:type :unknown}]
-           [{:type :unknown}
-            {:type :unknown}
-            {:type :unknown}
-            {:type :unknown}
-            {:type :unknown}]]}
-         (maze/create-unsolved-labyrinth "W")))
+          [[{:type :empty} {:type :empty} {:type :empty}]
+           [{:type :wall} {:type :empty} {:type :wall}]
+           [{:type :unknown} {:type :unknown} {:type :unknown}]
+           [{:type :unknown} {:type :unknown} {:type :unknown}]
+           [{:type :unknown} {:type :unknown} {:type :unknown}]]}
+         (maze/create-unsolved-labyrinth "WW")))
 
-  (is (= ["░░ v ░░"
-          "░░⎕ ⎕░░"
-          "░░░░░░░"
-          "░░░░░░░"
-          "░░░░░░░"]
-         (maze/render-labyrinth (maze/create-unsolved-labyrinth "WW")))))
+  (is (= ["░░░░░░░░ v ░░░░░░░░"
+          "░░░░░░░░⎕ ⎕░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"
+          "░░░░░░░░░░░░░░░░░░░"]
+         (maze/render-labyrinth (maze/create-unsolved-labyrinth "WRWWWW")))))
 
 (deftest render-labyrinth
-  (is (= ["░░ v ░░"
-          "░░⎕ ⎕░░"
-          "░░░░░░░"
-          "░░░░░░░"
-          "░░░░░░░"]
+  (is (= [" v "
+          "⎕ ⎕"
+          "░░░"
+          "░░░"
+          "░░░"]
          (maze/render-labyrinth (maze/create-unsolved-labyrinth "WW")))))
 
 (deftest render-compressed-labyrinth
@@ -280,22 +278,22 @@
                                                    "░░░░"])))
 
 (deftest move-route
-  (is (= ["░░   ░░"
-          "░░⎕ ⎕░░"
-          "░░░ ⎕░░"
-          "░░░ ⎕░░"
-          "░░░v░░░"]
+  (is (= ["   "
+          "⎕ ⎕"
+          "░ ⎕"
+          "░ ⎕"
+          "░v░"]
          (maze/render-labyrinth
           (maze/move-route
            (maze/create-unsolved-labyrinth "WW")
            "WW"))))
-  (is (= ["░░░   ░░░"
-          "░░░⎕ ⎕░░░"
-          "░░░░  >░░"
-          "░░░░░░░░░"
-          "░░░░░░░░░"
-          "░░░░░░░░░"
-          "░░░░░░░░░"]
+  (is (= ["░░   ░░"
+          "░░⎕ ⎕░░"
+          "░░░  >░"
+          "░░░░░░░"
+          "░░░░░░░"
+          "░░░░░░░"
+          "░░░░░░░"]
          (maze/render-labyrinth
           (maze/move-route
            (maze/create-unsolved-labyrinth "WLW")
@@ -360,10 +358,25 @@
 
 ;; for testing output by skimming the results manually in order to
 ;; locate more problems
+(defn solve-with-debug-data [problem-number route]
+  #_(println "solving problem" problem-number
+             "with route" route)
+  [problem-number
+   route
+   (render-compressed-route route)])
+
 (comment
-  (map-indexed (fn [i route]
-                 [(inc i) route (render-compressed-route route)])
+  (map-indexed #(solve-with-debug-data (inc %1) %2)
                (drop 1 maze/input-small)))
+
+(maze/render-labyrinth
+ (maze/move-route (parse-maze
+                   ["░░░░░░   ░░░░░░"
+                    "░ ░░░░⎕ ⎕░░░░░░"
+                    "░>      ⎕░░░░░░"
+                    "░ ⎕⎕⎕⎕⎕⎕⎕░░░░░░"
+                    "░░░░░░░░░░░░░░░"])
+                  "WWWWLW"))
 
 (deftest longest
   (is (= "abc" (maze/longest "abc" "ab"))))
@@ -437,12 +450,4 @@
                         "░░⎕ ⎕░░"
                         "░░   ░░"
                         "░░░░░░░"
-                        "░░░░░░░"])))))
-
-  (is (= nil
-         )))
-
-
-
-
-
+                        "░░░░░░░"]))))))

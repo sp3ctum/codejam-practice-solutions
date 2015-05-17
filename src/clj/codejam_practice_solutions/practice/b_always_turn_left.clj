@@ -34,11 +34,17 @@
   (str (subs string 0 position) char (subs string (inc position))))
 
 (defn create-unsolved-labyrinth [route]
-  (let [maze-cells (vec (for [row (range (inc (* 2 (count route))))]
+  (let [height (inc (* 2 (count route)))
+        width (+ 3 (* 4 (- (count route)
+                           2)))
+        maze-cells (vec (for [row (range height)]
                           (vec
-                           (for [column (range (inc (* 2 (inc (count route)))))]
+                           (for [column (range width)]
                              (unknown-cell)))))
-        [row column] [0 (inc (count route))]]
+        ;; Player coordinates are always at the top center.
+        ;; Adjust to 0-based array index with dec.
+        [row column] [0 (dec (quot (inc width)
+                                   2))]]
 
     {:player (player-at row column south)
      :maze (-> maze-cells
