@@ -369,28 +369,19 @@
   (map-indexed #(solve-with-debug-data (inc %1) %2)
                (drop 1 maze/input-small)))
 
-(maze/render-labyrinth
- (maze/move-route (parse-maze
-                   ["░░░░░░   ░░░░░░"
-                    "░ ░░░░⎕ ⎕░░░░░░"
-                    "░>      ⎕░░░░░░"
-                    "░ ⎕⎕⎕⎕⎕⎕⎕░░░░░░"
-                    "░░░░░░░░░░░░░░░"])
-                  "WWWWLW"))
-
 (deftest longest
   (is (= "abc" (maze/longest "abc" "ab"))))
 
 (deftest non-unknown-row
   (is (= (count (:maze (maze/non-unknown-rows
-                        (parse-maze ["░░   ░░"
-                                     "░░⎕ ⎕░░"
-                                     "░░⎕ ⎕░░"
-                                     "░░⎕ ⎕░░"
-                                     "░░⎕ ⎕░░"
-                                     "░░⎕ ⎕░░"
-                                     "░░   ░░"
-                                     "░░░░░░░"]))))
+                        (parse-maze ["░   ░"
+                                     "░⎕ ⎕░"
+                                     "░⎕ ⎕░"
+                                     "░⎕ ⎕░"
+                                     "░⎕ ⎕░"
+                                     "░⎕ ⎕░"
+                                     "░   ░"
+                                     "░░░░░"]))))
          5)))
 
 (deftest get-cells-with-coordinates
@@ -451,3 +442,79 @@
                         "░░   ░░"
                         "░░░░░░░"
                         "░░░░░░░"]))))))
+
+(deftest get-rooms
+  (is (= [[[1 1 {:type :empty}] [1 3 {:type :empty}] [1 5 {:type :empty}]]
+          [[3 1 {:type :empty}] [3 3 {:type :empty}] [3 5 {:type :empty}]]
+          [[5 1 {:type :empty}] [5 3 {:type :empty}] [5 5 {:type :empty}]]
+          [[7 1 {:type :empty}] [7 3 {:type :empty}] [7 5 {:type :empty}]]
+          [[9 1 {:type :empty}] [9 3 {:type :empty}] [9 5 {:type :empty}]]]
+         (maze/get-rooms
+          (:maze (parse-maze ["⎕⎕⎕⎕⎕ ⎕"
+                              "⎕     ⎕"
+                              "⎕ ⎕⎕⎕⎕⎕"
+                              "⎕ ⎕   ⎕"
+                              "⎕ ⎕⎕⎕ ⎕"
+                              "⎕     ⎕"
+                              "⎕⎕⎕⎕⎕ ⎕"
+                              "    ⎕ ⎕"
+                              "⎕ ⎕⎕⎕ ⎕"
+                              "⎕     ⎕"
+                              "⎕⎕⎕⎕⎕⎕⎕"]))))))
+
+(deftest has-space-tests
+  (is (maze/has-space-above 1 1
+                            (:maze (parse-maze ["⎕ ⎕"
+                                                "⎕ ⎕"
+                                                "⎕⎕⎕"]))))
+  (is (maze/has-space-below 1 1
+                            (:maze (parse-maze ["⎕⎕⎕"
+                                                "⎕  "
+                                                "⎕ ⎕"]))))
+
+  (is (maze/has-space-left 1 1
+                           (:maze (parse-maze ["⎕⎕⎕"
+                                               "   "
+                                               "⎕ ⎕"]))))
+
+  (is (maze/has-space-right 1 1
+                            (:maze (parse-maze ["⎕⎕⎕"
+                                                "⎕  "
+                                                "⎕ ⎕"])))))
+
+(deftest convert-maze-to-solution-format
+  (is (= ["1"]
+         (maze/convert-maze-to-solution-format
+          (:maze (parse-maze ["⎕ ⎕"
+                              "⎕ ⎕"
+                              "⎕⎕⎕"])))))
+
+  (is (= ["a"]
+         (maze/convert-maze-to-solution-format
+          (:maze (parse-maze ["⎕⎕⎕"
+                              "⎕  "
+                              "⎕ ⎕"])))))
+
+  (is (= ["1"]
+         (maze/convert-maze-to-solution-format
+          (:maze (parse-maze ["⎕ ⎕"
+                              "⎕ ⎕"
+                              "⎕⎕⎕"])))))
+
+  (is (= ["ac5"
+          "386"
+          "9c7"
+          "e43"
+          "9c5"]
+         (maze/convert-maze-to-solution-format
+          (:maze (parse-maze ["⎕⎕⎕⎕⎕ ⎕"
+                              "⎕     ⎕"
+                              "⎕ ⎕⎕⎕⎕⎕"
+                              "⎕ ⎕   ⎕"
+                              "⎕ ⎕⎕⎕ ⎕"
+                              "⎕     ⎕"
+                              "⎕⎕⎕⎕⎕ ⎕"
+                              "    ⎕ ⎕"
+                              "⎕ ⎕⎕⎕ ⎕"
+                              "⎕     ⎕"
+                              "⎕⎕⎕⎕⎕⎕⎕"]))))))

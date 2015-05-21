@@ -239,8 +239,8 @@
       second)) ; -> "abc"
 
 (defn turn-around-at-end-of-labyrinth
-  "Since a labyrinth always ends when turning around, marks walls to
-  the sides of the player."
+  "Since a labyrinth always ends when turning around, marks
+  empty-cells to the sides of the player."
   [labyrinth]
   (-> labyrinth
       mark-unknown-as-empty-at-player-left
@@ -253,3 +253,45 @@
       (move-route forward)
       turn-around-at-end-of-labyrinth
       (move-route backward)))
+
+(defn get-rooms [maze]
+  (->> (get-cells-with-coordinates maze)
+       (filter (fn [[row column _cell]]
+                 (and (odd? row)
+                      (odd? column))))
+       (group-by (fn [[column row cell]] column))
+       ;; [1 [[1 1 {:type :wall}]]] -> skip the group key here
+       (map second)))
+
+(defn is-empty-cell [cell]
+  (= (:type (empty-cell))
+     (:type cell)))
+
+(defn has-space-above [row column cells]
+  (is-empty-cell (get-in cells [(dec row) column])))
+
+(defn has-space-below [row column cells]
+  (is-empty-cell (get-in cells [(inc row) column])))
+
+(defn has-space-right [row column cells]
+  (is-empty-cell (get-in cells [row (inc column)])))
+
+(defn has-space-left [row column cells]
+  (is-empty-cell (get-in cells [row (dec column)])))
+
+(defn encode-room [maze [row column _cell]]
+  (cond-> 0
+          (has-space-above row column maze) (bit-or 2r0001)
+          (has-space-below row column maze) (bit-or 2r0010)
+          (has-space-left row column maze) (bit-or 2r0100)
+          (has-space-right row column maze) (bit-or 2r1000)))
+
+(defn convert-maze-to-solution-format [maze]
+  (let [rooms (get-rooms maze)]
+    (map
+     (fn [row-of-rooms]
+       (->> row-of-rooms
+            (map (partial encode-room maze))
+            (map (partial format "%x"))
+            s/join))
+     rooms)))
