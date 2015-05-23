@@ -1,6 +1,7 @@
 ;; Dashboard - Practice Problems - Google Code Jam
 ;; https://code.google.com/codejam/contest/32003/dashboard#s=p1
 ;; Problem B. Always Turn Left
+
 (ns codejam-practice-solutions.practice.b-always-turn-left
   (:require [clojure.string :as s]
             [taoensso.timbre :as timbre]))
@@ -20,15 +21,23 @@
 (def east :east)
 (def west :west)
 
-(def input-small
-  (drop 1
-        (s/split-lines
-         (slurp "./src/clj/codejam_practice_solutions/practice/B-small-practice.in"))))
-
-(def input-large
-  (drop 1
-        (s/split-lines
-         (slurp "./src/clj/codejam_practice_solutions/practice/B-large-practice.in"))))
+;; Short algorithm explanation:
+;;
+;; A labyrinth is given as two routes: the route going forward
+;; (start to finish) and backward (finish to start). The way labyrinth
+;; solving works is by creating a huge labyrinth that can contain any
+;; permutation of the longer route (forward backward), moving
+;; a "player" character inside it until both routes are exhausted, and
+;; finally compressing the labyrinth by removing extra space around
+;; it.
+;;
+;; How do we know where the walls are when moving?
+;; - if turning left, there must be space on the left hand side
+;; - if moving forward, there must be space in the front and a wall on
+;;   the left
+;; - if turning right, we can neither turn left or go forward, so
+;;   there must be walls there
+;;
 
 (defn parse-input [input-line]
   (let [[entrance-to-exit exit-to-entrance]
@@ -49,7 +58,14 @@
             (assoc-in [:maze y :row-has-wall] true))
     (assoc-in labyrinth [:maze y :cells x] new-cell)))
 
-(defn create-unsolved-labyrinth [route]
+(defn create-unsolved-labyrinth
+  "Create a labyrinth that is large enough to contain any permutation
+  of the given route. This labyrinth will be absolutely huge for large
+  routes (above a couple hundred moves), so it's best not to render it
+  from the repl. If you want to see what it looks like, you can use
+  the render-compressed-labyrinth function in the test namespace to
+  show only the labyrinth and nothing around it."
+  [route]
   (let [height (inc (* 2 (count route)))
         width (+ 3 (* 4 (- (count route)
                            2)))
@@ -83,30 +99,9 @@
         (assoc-cell row column empty-cell)
         (assoc-cell 1 column empty-cell))))
 
-(defn render-player [player maze-row-strings]
-  (let [player-symbol (condp = (:facing player)
-                        north "A"
-                        south "v"
-                        east ">"
-                        west "<")
-        x (:x player)
-        y (:y player)]
-    (update-in maze-row-strings [y] #(replace-char % x player-symbol))))
-
-(defn render-cell [cell]
-  (condp = (:type cell)
-    :unknown "░"
-    :wall "⎕"
-    :empty " "))
-
 (defnp non-unknown-rows [{:keys [maze] :as labyrinth}]
   (let [new-maze (vec (filter :row-has-wall maze))]
     (assoc labyrinth :maze new-maze)))
-
-(defn get-cells-with-coordinates [maze]
-  (for [[row-index row] (map vector (range) maze)
-        [cell-index cell] (map vector (range) (:cells row))]
-    [row-index cell-index cell]))
 
 (defn is-empty-cell [cell]
   (= (:type empty-cell)
@@ -141,28 +136,11 @@
         (assoc :maze new-maze)
         (assoc :player new-player))))
 
-(defnp compress-labyrinth [labyrinth]
+(defnp compress-labyrinth
+  [labyrinth]
   (->> labyrinth
        non-unknown-rows
        only-non-unknown-columns))
-
-(defn render-labyrinth
-  "Render a debug version of the labyrinth. Draws the player and all
-  cells present in the labyrinth without removing anything."
-  [{:keys [maze player] :as labyrinth}]
-  (let [rows (vec (for [row maze]
-                    (s/join (map render-cell (:cells row)))))]
-    (render-player player rows)))
-
-(defn render-compressed-labyrinth
-  "Used to render a problem result set. Removes extra padding in the
-  labyrinth, and does not render the player. If you want raw data, use
-  render-labyrinth instead."
-  [labyrinth]
-  (let [compressed-labyrinth (compress-labyrinth labyrinth)
-        rendered-maze (vec (for [row (:maze compressed-labyrinth)]
-                             (s/join (map render-cell (:cells row)))))]
-    rendered-maze))
 
 ;; cell retrieval
 (defn get-cell-in-front-of-player [{:keys [x y facing] :as player}]
@@ -274,6 +252,11 @@
       turn-around-at-end-of-labyrinth
       (move-route backward)))
 
+(defn get-cells-with-coordinates [maze]
+  (for [[row-index row] (map vector (range) maze)
+        [cell-index cell] (map vector (range) (:cells row))]
+    [row-index cell-index cell]))
+
 (defn get-rooms [maze]
   (->> (get-cells-with-coordinates maze)
        (filter (fn [[row column _cell]]
@@ -330,6 +313,16 @@
         (s/join (pmap solve-and-print
                       (range)
                       file-contents))))
+
+(def input-small
+  (drop 1
+        (s/split-lines
+         (slurp "./src/clj/codejam_practice_solutions/practice/B-small-practice.in"))))
+
+(def input-large
+  (drop 1
+        (s/split-lines
+         (slurp "./src/clj/codejam_practice_solutions/practice/B-large-practice.in"))))
 
 (comment
 

@@ -6,6 +6,42 @@
 
 (declare parse-maze)
 
+(defn render-player [player maze-row-strings]
+  (let [player-symbol (condp = (:facing player)
+                        maze/north "A"
+                        maze/south "v"
+                        maze/east ">"
+                        maze/west "<")
+        x (:x player)
+        y (:y player)]
+    (update-in maze-row-strings
+               [y]
+               #(maze/replace-char % x player-symbol))))
+
+(defn render-cell [cell]
+  (condp = (:type cell)
+    :unknown "░"
+    :wall "⎕"
+    :empty " "))
+
+(defn render-labyrinth
+  "Render a debug version of the labyrinth. Draws the player and all
+  cells present in the labyrinth without removing anything."
+  [{:keys [maze player] :as labyrinth}]
+  (let [rows (vec (for [row maze]
+                    (s/join (map render-cell (:cells row)))))]
+    (render-player player rows)))
+
+(defn render-compressed-labyrinth
+  "Used to render a problem result set. Removes extra padding in the
+  labyrinth, and does not render the player. If you want raw data, use
+  render-labyrinth instead."
+  [labyrinth]
+  (let [compressed-labyrinth (maze/compress-labyrinth labyrinth)
+        rendered-maze (vec (for [row (:maze compressed-labyrinth)]
+                             (s/join (map render-cell (:cells row)))))]
+    rendered-maze))
+
 (deftest parse-input
   (is (= {:forward "WWWWWWWWWLW", :backward "WRWWWWWWWWW"}
          (maze/parse-input "WWWWWWWWWLW WRWWWWWWWWW"))))
@@ -38,17 +74,17 @@
           "░░░░░░░░░░░░░░░░░░░"
           "░░░░░░░░░░░░░░░░░░░"
           "░░░░░░░░░░░░░░░░░░░"]
-         (maze/render-labyrinth (maze/create-unsolved-labyrinth "WRWWWW")))))
+         (render-labyrinth (maze/create-unsolved-labyrinth "WRWWWW")))))
 
-(deftest render-labyrinth
+(deftest render-labyrinth-test
   (is (= [" v "
           "⎕ ⎕"
           "░░░"
           "░░░"
           "░░░"]
-         (maze/render-labyrinth (maze/create-unsolved-labyrinth "WW")))))
+         (render-labyrinth (maze/create-unsolved-labyrinth "WW")))))
 
-(deftest render-compressed-labyrinth
+(deftest render-compressed-labyrinth-test
   (is (= ["⎕⎕⎕⎕⎕ ⎕"
           "⎕     ⎕"
           "⎕ ⎕⎕⎕⎕⎕"
@@ -60,7 +96,7 @@
           "⎕ ⎕⎕⎕ ⎕"
           "⎕     ⎕"
           "⎕⎕⎕⎕⎕⎕⎕"]
-         (maze/render-compressed-labyrinth
+         (render-compressed-labyrinth
           (parse-maze ["░░░░░░░░░░░░░░░A ░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕⎕⎕⎕⎕ ⎕░░░░░░░░░░░░░░"
                        "░░░░░░░░░░⎕     ⎕░░░░░░░░░░░░░░"
@@ -134,7 +170,7 @@
                       "░v⎕░"]))))
 
 (deftest mark-unknown-as-wall-at-player-left
-  (is (= (maze/render-labyrinth (maze/mark-unknown-as-wall-at-player-left
+  (is (= (render-labyrinth (maze/mark-unknown-as-wall-at-player-left
                                  (parse-maze ["░░░░"
                                               "░>░░"
                                               "░░░░"
@@ -142,7 +178,7 @@
                                                           "░>░░"
                                                           "░░░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/mark-unknown-as-wall-at-player-left
+  (is (= (render-labyrinth (maze/mark-unknown-as-wall-at-player-left
                                  (parse-maze ["░ ░░"
                                               "░>░░"
                                               "░░░░"
@@ -152,7 +188,7 @@
                                                           "░░░░"])))
 
 (deftest mark-unknown-as-wall-at-player-left
-  (is (= (maze/render-labyrinth (maze/mark-unknown-as-empty-at-player-left
+  (is (= (render-labyrinth (maze/mark-unknown-as-empty-at-player-left
                                  (parse-maze ["░░░░"
                                               "░>░░"
                                               "░░░░"
@@ -160,7 +196,7 @@
                                                           "░>░░"
                                                           "░░░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/mark-unknown-as-empty-at-player-left
+  (is (= (render-labyrinth (maze/mark-unknown-as-empty-at-player-left
                                  (parse-maze ["░ ░░"
                                               "░>░░"
                                               "░░░░"
@@ -169,7 +205,7 @@
                                                           "░░░░"
                                                           "░░░░"])))
 (deftest move-forward
-  (is (= (maze/render-labyrinth (maze/move-forward
+  (is (= (render-labyrinth (maze/move-forward
                                  (parse-maze ["░░░░"
                                               "░░░░"
                                               "░A░░"
@@ -177,7 +213,7 @@
                                                           "⎕ ░░"
                                                           "⎕ ░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/move-forward
+  (is (= (render-labyrinth (maze/move-forward
                                  (parse-maze ["░░░░"
                                               "░>░░"
                                               "░░░░"
@@ -185,7 +221,7 @@
                                                           "░  >"
                                                           "░░░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/move-forward
+  (is (= (render-labyrinth (maze/move-forward
                                  (parse-maze ["░░░░"
                                               "░v░░"
                                               "░░░░"
@@ -193,7 +229,7 @@
                                                           "░ ⎕░"
                                                           "░ ⎕░"
                                                           "░v░░"]))
-  (is (= (maze/render-labyrinth (maze/move-forward
+  (is (= (render-labyrinth (maze/move-forward
                                  (parse-maze ["░░░░"
                                               "░░<░"
                                               "░░░░"
@@ -213,7 +249,7 @@
           :player {:x 1, :y 0, :facing :north}})))
 
 (deftest turn-right
-  (is (= (maze/render-labyrinth (maze/turn-right
+  (is (= (render-labyrinth (maze/turn-right
                                  (parse-maze ["░░░░"
                                               "░<░░"
                                               "░░░░"
@@ -221,7 +257,7 @@
                                                           "░A░░"
                                                           "⎕⎕░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/turn-right
+  (is (= (render-labyrinth (maze/turn-right
                                  (parse-maze ["░░░░"
                                               "░A░░"
                                               "░░░░"
@@ -229,7 +265,7 @@
                                                           "⎕>░░"
                                                           "░░░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/turn-right
+  (is (= (render-labyrinth (maze/turn-right
                                  (parse-maze ["░░░░"
                                               "░>░░"
                                               "░░░░"
@@ -237,7 +273,7 @@
                                                           "░v░░"
                                                           "░░░░"
                                                           "░░░░"]))
-  (is (= (maze/render-labyrinth (maze/turn-right
+  (is (= (render-labyrinth (maze/turn-right
                                  (parse-maze ["░░░░"
                                               "░v░░"
                                               "░░░░"
@@ -247,7 +283,7 @@
                                                           "░░░░"])))
 
 (deftest turn-left
-  (is (= (maze/render-labyrinth
+  (is (= (render-labyrinth
           (maze/turn-left (parse-maze ["░░░░"
                                        "░A░░"
                                        "░░░░"
@@ -255,7 +291,7 @@
                                                    "░<░░"
                                                    "░░░░"
                                                    "░░░░"]))
-  (is (= (maze/render-labyrinth
+  (is (= (render-labyrinth
           (maze/turn-left (parse-maze ["░░░░"
                                        "░>░░"
                                        "░░░░"
@@ -263,7 +299,7 @@
                                                    "░A░░"
                                                    "░░░░"
                                                    "░░░░"]))
-  (is (= (maze/render-labyrinth
+  (is (= (render-labyrinth
           (maze/turn-left (parse-maze ["░░░░"
                                        "░v░░"
                                        "░░░░"
@@ -271,7 +307,7 @@
                                                    "░>░░"
                                                    "░░░░"
                                                    "░░░░"]))
-  (is (= (maze/render-labyrinth
+  (is (= (render-labyrinth
           (maze/turn-left (parse-maze ["░░░░"
                                        "░<░░"
                                        "░░░░"
@@ -286,7 +322,7 @@
           "░ ⎕"
           "░ ⎕"
           "░v░"]
-         (maze/render-labyrinth
+         (render-labyrinth
           (maze/move-route
            (maze/create-unsolved-labyrinth "WW")
            "WW"))))
@@ -297,7 +333,7 @@
           "░░░░░░░"
           "░░░░░░░"
           "░░░░░░░"]
-         (maze/render-labyrinth
+         (render-labyrinth
           (maze/move-route
            (maze/create-unsolved-labyrinth "WLW")
            "WLW")))))
@@ -308,8 +344,8 @@
             maze/parse-input
             maze/move-route-and-back)]
     (if debug?
-      (maze/render-labyrinth labyrinth)
-      (maze/render-compressed-labyrinth labyrinth))))
+      (render-labyrinth labyrinth)
+      (render-compressed-labyrinth labyrinth))))
 
 (deftest move-route-and-back
   (is (= ["⎕ ⎕"
@@ -420,7 +456,7 @@
   (is (= ["⎕ ⎕"
           "⎕ ⎕"
           "⎕ ⎕"]
-         (maze/render-compressed-labyrinth
+         (render-compressed-labyrinth
           (maze/only-non-unknown-columns
            (parse-maze ["░░ A ░░"
                         "░░⎕ ⎕░░"
@@ -432,7 +468,7 @@
   (is (= ["⎕ ⎕"
           "⎕ ⎕"
           "⎕ ⎕"]
-         (maze/render-compressed-labyrinth
+         (render-compressed-labyrinth
           (maze/non-unknown-rows
            (parse-maze [" A " ; player will be ignored
                         "⎕ ⎕"
@@ -445,7 +481,7 @@
   (is (= ["⎕ ⎕"
           "⎕ ⎕"
           "⎕ ⎕"]
-         (maze/render-compressed-labyrinth
+         (render-compressed-labyrinth
           (maze/compress-labyrinth
            (parse-maze ["░░ A ░░"
                         "░░⎕ ⎕░░"
