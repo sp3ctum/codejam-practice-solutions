@@ -99,10 +99,9 @@
     :wall "⎕"
     :empty " "))
 
-(defn non-unknown-rows [{:keys [maze] :as labyrinth}]
-  (p :non-unknown-rows
-     (let [new-maze (vec (filter :row-has-wall maze))]
-       (assoc labyrinth :maze new-maze))))
+(defnp non-unknown-rows [{:keys [maze] :as labyrinth}]
+  (let [new-maze (vec (filter :row-has-wall maze))]
+    (assoc labyrinth :maze new-maze)))
 
 (defn get-cells-with-coordinates [maze]
   (for [[row-index row] (map vector (range) maze)
@@ -125,29 +124,27 @@
     (apply min (filter (comp not nil?)
                        indices))))
 
-(defn only-non-unknown-columns [{:keys [maze player] :as labyrinth}]
-  (p :only-non-unknown-columns
-     (let [row-cells (map :cells maze)
-           row-length (count (first row-cells))
-           earliest-column (first-non-unknown-index row-cells)
-           latest-column (first-non-unknown-index (map reverse row-cells))
-           new-maze (map (fn [row]
-                           (update-in row [:cells]
-                                      #(vec (take (- row-length
-                                                     latest-column
-                                                     earliest-column)
-                                                  (drop earliest-column %)))))
-                         maze)
-           new-player (update-in player [:x] - earliest-column)]
-       (-> labyrinth
-           (assoc :maze new-maze)
-           (assoc :player new-player)))))
+(defnp only-non-unknown-columns [{:keys [maze player] :as labyrinth}]
+  (let [row-cells (map :cells maze)
+        row-length (count (first row-cells))
+        earliest-column (first-non-unknown-index row-cells)
+        latest-column (first-non-unknown-index (map reverse row-cells))
+        new-maze (map (fn [row]
+                        (update-in row [:cells]
+                                   #(vec (take (- row-length
+                                                  latest-column
+                                                  earliest-column)
+                                               (drop earliest-column %)))))
+                      maze)
+        new-player (update-in player [:x] - earliest-column)]
+    (-> labyrinth
+        (assoc :maze new-maze)
+        (assoc :player new-player))))
 
-(defn compress-labyrinth [labyrinth]
-  (p :compress-labyrinth
-     (->> labyrinth
-          non-unknown-rows
-          only-non-unknown-columns)))
+(defnp compress-labyrinth [labyrinth]
+  (->> labyrinth
+       non-unknown-rows
+       only-non-unknown-columns))
 
 (defn render-labyrinth
   "Render a debug version of the labyrinth. Draws the player and all
@@ -271,12 +268,11 @@
       turn-player-right
       mark-unknown-as-empty-at-player-left))
 
-(defn move-route-and-back [{:keys [forward backward]}]
-  (p :move-route-and-back
-     (-> (create-unsolved-labyrinth (longest forward backward))
-         (move-route forward)
-         turn-around-at-end-of-labyrinth
-         (move-route backward))))
+(defnp move-route-and-back [{:keys [forward backward]}]
+  (-> (create-unsolved-labyrinth (longest forward backward))
+      (move-route forward)
+      turn-around-at-end-of-labyrinth
+      (move-route backward)))
 
 (defn get-rooms [maze]
   (->> (get-cells-with-coordinates maze)
@@ -307,17 +303,16 @@
           (can-walk-west row column maze)  (bit-or 2r0100)
           (can-walk-east row column maze)  (bit-or 2r1000)))
 
-(defn convert-labyrinth-to-solution-format [{:keys [maze] :as labyrinth}]
-  (p :convert-labyrinth-to-solution-format
-     (let [row-cells (vec (map :cells maze))
-           rooms (get-rooms maze)]
-       (map
-        (fn [row-of-rooms]
-          (->> row-of-rooms
-               (map (partial encode-room row-cells))
-               (map (partial format "%x"))
-               s/join))
-        rooms))))
+(defnp convert-labyrinth-to-solution-format [{:keys [maze] :as labyrinth}]
+  (let [row-cells (vec (map :cells maze))
+        rooms (get-rooms maze)]
+    (map
+     (fn [row-of-rooms]
+       (->> row-of-rooms
+            (map (partial encode-room row-cells))
+            (map (partial format "%x"))
+            s/join))
+     rooms)))
 
 (defn solve [line]
   (-> (parse-input line)
@@ -338,9 +333,9 @@
 (comment
 
   (profile :info :whatever
-           (solve (nth input-large 5)))
+           (solve-file "input-small-output.txt"
+                       input-small))
 
-  (solve-file "input-small-output.txt"
-              input-small)
-  (solve-file "input-large-output.txt"
-              (nth input-large 3)))
+  (profile :info :whatever
+           (solve-file "input-large-output.txt"
+                       input-large)))
