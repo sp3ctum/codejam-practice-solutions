@@ -79,13 +79,13 @@
 
 (defn parse-cell [cell-string]
   (condp = (str cell-string)
-    "░" (maze/unknown-cell)
-    "⎕" (maze/wall-cell)
-    " " (maze/empty-cell)
-    "A" (maze/empty-cell)
-    "v" (maze/empty-cell)
-    "<" (maze/empty-cell)
-    ">" (maze/empty-cell)))
+    "░" maze/unknown-cell
+    "⎕" maze/wall-cell
+    " " maze/empty-cell
+    "A" maze/empty-cell
+    "v" maze/empty-cell
+    "<" maze/empty-cell
+    ">" maze/empty-cell))
 
 (defn parse-player-position [maze]
   (let [[column row cell] (first (for [[row-index row] (map vector (range) maze)
@@ -460,7 +460,40 @@
                               "    ⎕ ⎕"
                               "⎕ ⎕⎕⎕ ⎕"
                               "⎕     ⎕"
-                              "⎕⎕⎕⎕⎕⎕⎕"]))))))
+                              "⎕⎕⎕⎕⎕⎕⎕"])))))
+
+  (is (= [[[1 1 {:type :empty}]]
+          [[3 1 {:type :empty}]]
+          [[5 1 {:type :empty}]]
+          [[7 1 {:type :empty}]]
+          [[9 1 {:type :empty}]]
+          [[11 1 {:type :empty}]]
+          [[13 1 {:type :empty}]]
+          [[15 1 {:type :empty}]]
+          [[17 1 {:type :empty}]]
+          [[19 1 {:type :empty}]]])
+      (maze/get-rooms
+       (:maze (parse-maze ["⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕  "
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕ ⎕"
+                           "⎕⎕⎕"])))))
 
 (deftest can-walk-tests
   (is (maze/can-walk-north 1 1
@@ -521,4 +554,9 @@
 
 (deftest solve
   (is (= ["ac5" "386" "9c7" "e43" "9c5"]
-         (maze/solve "WRWWLWWLWWLWLWRRWRWWWRWWRWLW WWRRWLWLWWLWWLWWRWWRWWLW"))))
+         (maze/solve "WRWWLWWLWWLWLWRRWRWWWRWWRWLW WWRRWLWLWWLWWLWWRWWRWWLW")))
+
+  (is (= ["3" "3" "3" "3" "3" "3" "b" "3" "3" "1"]
+         (maze/solve "WWWWWWWLW WLWWWRRWWWWWWWWWW"))))
+
+

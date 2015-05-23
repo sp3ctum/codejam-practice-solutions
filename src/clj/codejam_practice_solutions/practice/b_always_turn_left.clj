@@ -8,9 +8,9 @@
 (def right \R)
 (def left \L)
 
-(defn unknown-cell [] {:type :unknown})
-(defn wall-cell [] {:type :wall})
-(defn empty-cell [] {:type :empty})
+(def unknown-cell {:type :unknown})
+(def wall-cell {:type :wall})
+(def empty-cell {:type :empty})
 
 (def south :south)
 (def north :north)
@@ -18,8 +18,14 @@
 (def west :west)
 
 (def input-small
-  (s/split-lines
-   (slurp "./src/clj/codejam_practice_solutions/practice/B-small-practice.in")))
+  (drop 1
+        (s/split-lines
+         (slurp "./src/clj/codejam_practice_solutions/practice/B-small-practice.in"))))
+
+(def input-large
+  (drop 1
+        (s/split-lines
+         (slurp "./src/clj/codejam_practice_solutions/practice/B-large-practice.in"))))
 
 (defn parse-input [input-line]
   (let [[entrance-to-exit exit-to-entrance]
@@ -40,7 +46,7 @@
         maze-cells (vec (for [row (range height)]
                           (vec
                            (for [column (range width)]
-                             (unknown-cell)))))
+                             unknown-cell))))
         ;; Player coordinates are always at the top center.
         ;; Adjust to 0-based array index with dec.
         [row column] [0 (dec (quot (inc width)
@@ -49,8 +55,8 @@
     {:player (player-at row column south)
      :maze (-> maze-cells
                ;; ahead of the player are always walls on both sides
-               (assoc-in [1 (dec column)] (wall-cell))
-               (assoc-in [1 (inc column)] (wall-cell))
+               (assoc-in [1 (dec column)] wall-cell)
+               (assoc-in [1 (inc column)] wall-cell)
 
                ;; On the sides of the player are always empty cells
                ;; to prevent them from being marked as walls.
@@ -58,12 +64,12 @@
                ;; This would mess up reporting the results since the
                ;; cells next to the player in the beginning are not
                ;; included in the result by specification.
-               (assoc-in [0 (dec column)] (empty-cell))
-               (assoc-in [0 (inc column)] (empty-cell))
+               (assoc-in [0 (dec column)] empty-cell)
+               (assoc-in [0 (inc column)] empty-cell)
 
                ;; under and in front of the player are empty-cells
-               (assoc-in [row column] (empty-cell))
-               (assoc-in [1 column] (empty-cell)))}))
+               (assoc-in [row column] empty-cell)
+               (assoc-in [1 column] empty-cell))}))
 
 (defn render-player [player maze]
   (let [player-symbol (condp = (:facing player)
@@ -168,19 +174,19 @@
   (let [{:keys [x y]} (get-cell-to-the-left-of-player player)
         cell (get-in labyrinth [:maze y x])]
     (if (= (:type cell) :unknown)
-      (assoc-in labyrinth [:maze y x] (wall-cell))
+      (assoc-in labyrinth [:maze y x] wall-cell)
       labyrinth)))
 
 (defn mark-unknown-as-empty-at-player-left [{:keys [player] :as labyrinth}]
   (let [{:keys [x y]} (get-cell-to-the-left-of-player player)
         cell (get-in labyrinth [:maze y x])]
     (if (= (:type cell) :unknown)
-      (assoc-in labyrinth [:maze y x] (empty-cell))
+      (assoc-in labyrinth [:maze y x] empty-cell)
       labyrinth)))
 
 (defn mark-wall-at-player-left-top [{:keys [player] :as labyrinth}]
   (let [{:keys [x y]} (get-cell-to-the-top-left-of-player player)]
-    (assoc-in labyrinth [:maze y x] (wall-cell))))
+    (assoc-in labyrinth [:maze y x] wall-cell)))
 
 (defn move-player-forward [{:keys [player] :as labyrinth}]
   (let [[x y] [(:x player)
@@ -193,7 +199,7 @@
     (-> labyrinth
         (assoc-in [:player :x] new-x)
         (assoc-in [:player :y] new-y)
-        (assoc-in [:maze new-y new-x] (empty-cell)))))
+        (assoc-in [:maze new-y new-x] empty-cell))))
 
 ;; turning around
 (defn turn-player-right [{:keys [player] :as labyrinth}]
@@ -260,11 +266,12 @@
                  (and (odd? row)
                       (odd? column))))
        (group-by (fn [[column row cell]] column))
+       (sort-by (fn [[column row cell]] column))
        ;; [1 [[1 1 {:type :wall}]]] -> skip the group key here
        (map second)))
 
 (defn is-empty-cell [cell]
-  (= (:type (empty-cell))
+  (= (:type empty-cell)
      (:type cell)))
 
 (defn can-walk-north [row column cells]
@@ -313,5 +320,15 @@
                              file-contents))))
 
 (comment
+  (count (:maze (create-unsolved-labyrinth (:backward (parse-input (nth input-large 3))))))
+  (count (:backward (parse-input (nth input-large 3))))
+
+  (solve (nth input-large 5))
+
+  (apply max (map count input-small))
+  (apply max (map count input-large))
+
   (solve-file "input-small-output.txt"
-              (drop 1 input-small)))
+              input-small)
+  (solve-file "input-large-output.txt"
+              (nth input-large 3)))
