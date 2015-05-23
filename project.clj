@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :source-paths ["src/clj"]
-:repl-options {:timeout 200000} ;; Defaults to 30000 (30 seconds)
+  :repl-options {:timeout 200000} ;; Defaults to 30000 (30 seconds)
 
   :test-paths ["spec/clj"]
 
@@ -17,7 +17,8 @@
                  [enlive "1.1.5"]
                  [om "0.8.0-rc1"]
                  [environ "1.0.0"]
-                 [http-kit "2.1.19"]]
+                 [http-kit "2.1.19"]
+                 [com.taoensso/timbre "3.4.0"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]

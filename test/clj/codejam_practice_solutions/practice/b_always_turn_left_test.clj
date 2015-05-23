@@ -18,11 +18,11 @@
 (deftest create-unsolved-labyrinth
   (is (= {:player {:x 1, :y 0, :facing :south},
           :maze
-          [[{:type :empty} {:type :empty} {:type :empty}]
-           [{:type :wall} {:type :empty} {:type :wall}]
-           [{:type :unknown} {:type :unknown} {:type :unknown}]
-           [{:type :unknown} {:type :unknown} {:type :unknown}]
-           [{:type :unknown} {:type :unknown} {:type :unknown}]]}
+          [{:row-has-wall false, :cells [{:type :empty} {:type :empty} {:type :empty}]}
+           {:row-has-wall true,  :cells [{:type :wall} {:type :empty} {:type :wall}]}
+           {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}
+           {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}
+           {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}]}
          (maze/create-unsolved-labyrinth "WW")))
 
   (is (= ["░░░░░░░░ v ░░░░░░░░"
@@ -118,17 +118,20 @@
 ;; test readability helper :|
 (defn parse-maze [lines]
   (let [maze (vec (for [line lines]
-                    (vec (map parse-cell line))))
+                    {:row-has-wall (.contains line "⎕")
+                     :cells (vec (map parse-cell line))}))
         player-position (parse-player-position lines)]
     {:maze maze
      :player player-position}))
 
 (deftest parse-maze-test
-  (is (= {:maze [[{:type :unknown} {:type :unknown} {:type :unknown} {:type :unknown}]
-                 [{:type :unknown} {:type :empty} {:type :unknown} {:type :unknown}]],
+  (is (= {:maze [{:row-has-wall false
+                  :cells [{:type :unknown} {:type :unknown} {:type :unknown} {:type :unknown}]}
+                 {:row-has-wall true,
+                  :cells [{:type :unknown} {:type :empty} {:type :wall} {:type :unknown}]}],
           :player {:x 1, :y 1, :facing :south}}
          (parse-maze ["░░░░"
-                      "░v░░"]))))
+                      "░v⎕░"]))))
 
 (deftest mark-unknown-as-wall-at-player-left
   (is (= (maze/render-labyrinth (maze/mark-unknown-as-wall-at-player-left
@@ -204,10 +207,10 @@
                        "░░░"
                        "░A░"]))
          {:maze
-          [[{:type :unknown} {:type :empty} {:type :unknown}]
-           [{:type :wall} {:type :empty} {:type :unknown}]
-           [{:type :wall} {:type :empty} {:type :unknown}]],
-          :player {:y 0, :facing :north, :x 1}})))
+          [{:row-has-wall false, :cells [{:type :unknown} {:type :empty} {:type :unknown}]}
+           {:row-has-wall true, :cells [{:type :wall} {:type :empty} {:type :unknown}]}
+           {:row-has-wall true, :cells [{:type :wall} {:type :empty} {:type :unknown}]}],
+          :player {:x 1, :y 0, :facing :north}})))
 
 (deftest turn-right
   (is (= (maze/render-labyrinth (maze/turn-right
@@ -385,24 +388,33 @@
          5)))
 
 (deftest get-cells-with-coordinates
-  (is (= [[0 0 \░] [0 1 \░] [0 2 \░]
-          [1 0 \⎕] [1 1 \v] [1 2 \⎕]
-          [2 0 \░] [2 1 \░] [2 2 \░]]
+  (is (= [[0 0 {:type :unknown}]
+          [0 1 {:type :unknown}]
+          [0 2 {:type :unknown}]
+          [1 0 {:type :wall}]
+          [1 1 {:type :empty}]
+          [1 2 {:type :wall}]
+          [2 0 {:type :unknown}]
+          [2 1 {:type :unknown}]
+          [2 2 {:type :unknown}]]
          (maze/get-cells-with-coordinates
-          ["░░░"
-           "⎕v⎕"
-           "░░░"]))))
+          (:maze
+           (parse-maze
+            ["░░░"
+             "⎕v⎕"
+             "░░░"]))))))
 
 (deftest first-non-unknown-index
   (is (= 2
          (maze/first-non-unknown-index
-          (:maze (parse-maze ["░░ A ░░"
-                              "░░⎕ ⎕░░"
-                              "░░⎕ ⎕░░"
-                              "░░⎕ ⎕░░"
-                              "░░   ░░"
-                              "░░░░░░░"
-                              "░░░░░░░"]))))))
+          (map :cells
+               (:maze (parse-maze ["░░ A ░░"
+                                   "░░⎕ ⎕░░"
+                                   "░░⎕ ⎕░░"
+                                   "░░⎕ ⎕░░"
+                                   "░░   ░░"
+                                   "░░░░░░░"
+                                   "░░░░░░░"])))))))
 
 (deftest only-non-unknown-columns
   (is (= ["⎕ ⎕"
@@ -496,24 +508,29 @@
                            "⎕⎕⎕"])))))
 
 (deftest can-walk-tests
-  (is (maze/can-walk-north 1 1
-                           (:maze (parse-maze ["⎕ ⎕"
-                                               "⎕ ⎕"
-                                               "⎕⎕⎕"]))))
-  (is (maze/can-walk-south 1 1
-                           (:maze (parse-maze ["⎕⎕⎕"
-                                               "⎕  "
-                                               "⎕ ⎕"]))))
+  (is (maze/can-walk-north
+       1 1
+       (vec (map :cells (:maze (parse-maze ["⎕ ⎕"
+                                            "⎕ ⎕"
+                                            "⎕⎕⎕"]))))))
 
-  (is (maze/can-walk-west 1 1
-                          (:maze (parse-maze ["⎕⎕⎕"
-                                              "   "
-                                              "⎕ ⎕"]))))
+  (is (maze/can-walk-south
+       1 1
+       (vec (map :cells (:maze (parse-maze ["⎕⎕⎕"
+                                            "⎕  "
+                                            "⎕ ⎕"]))))))
 
-  (is (maze/can-walk-east 1 1
-                          (:maze (parse-maze ["⎕⎕⎕"
-                                              "⎕  "
-                                              "⎕ ⎕"])))))
+  (is (maze/can-walk-west
+       1 1
+       (vec (map :cells (:maze (parse-maze [""
+                                            "   "
+                                            "⎕ ⎕"]))))))
+
+  (is (maze/can-walk-east
+       1 1
+       (vec (map :cells (:maze (parse-maze ["⎕⎕⎕"
+                                            "⎕  "
+                                            "⎕ ⎕"])))))))
 
 (deftest convert-maze-to-solution-format
   (is (= ["1"]
