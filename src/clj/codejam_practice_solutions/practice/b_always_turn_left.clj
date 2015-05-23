@@ -83,11 +83,11 @@
 
 (defn non-unknown-rows [{:keys [maze] :as labyrinth}]
   (let [new-maze
-        (filter (fn [cells]
-                  (not (every? #(or (= (:type %) :unknown)
-                                    (= (:type %) :empty))
-                               cells)))
-                maze)]
+        (vec (filter (fn [cells]
+                       (not (every? #(or (= (:type %) :unknown)
+                                         (= (:type %) :empty))
+                                    cells)))
+                     maze))]
     (assoc labyrinth :maze new-maze)))
 
 (defn get-cells-with-coordinates [maze]
@@ -111,11 +111,11 @@
   (let [row-length (count (first maze))
         earliest-column (first-non-unknown-index maze)
         latest-column (first-non-unknown-index (map reverse maze))
-        new-maze (map (fn [row] (take (- row-length
-                                         latest-column
-                                         earliest-column)
-                                      (drop earliest-column row)))
-                      maze)
+        new-maze (vec (map (fn [row] (vec (take (- row-length
+                                                   latest-column
+                                                   earliest-column)
+                                                (drop earliest-column row))))
+                           maze))
         new-player (update-in player [:x] - earliest-column)]
     (-> labyrinth
         (assoc :maze new-maze)
@@ -267,26 +267,26 @@
   (= (:type (empty-cell))
      (:type cell)))
 
-(defn has-space-above [row column cells]
+(defn can-walk-north [row column cells]
   (is-empty-cell (get-in cells [(dec row) column])))
 
-(defn has-space-below [row column cells]
+(defn can-walk-south [row column cells]
   (is-empty-cell (get-in cells [(inc row) column])))
 
-(defn has-space-right [row column cells]
+(defn can-walk-east [row column cells]
   (is-empty-cell (get-in cells [row (inc column)])))
 
-(defn has-space-left [row column cells]
+(defn can-walk-west [row column cells]
   (is-empty-cell (get-in cells [row (dec column)])))
 
 (defn encode-room [maze [row column _cell]]
   (cond-> 0
-          (has-space-above row column maze) (bit-or 2r0001)
-          (has-space-below row column maze) (bit-or 2r0010)
-          (has-space-left row column maze) (bit-or 2r0100)
-          (has-space-right row column maze) (bit-or 2r1000)))
+          (can-walk-north row column maze) (bit-or 2r0001)
+          (can-walk-south row column maze) (bit-or 2r0010)
+          (can-walk-west row column maze)  (bit-or 2r0100)
+          (can-walk-east row column maze)  (bit-or 2r1000)))
 
-(defn convert-maze-to-solution-format [maze]
+(defn convert-labyrinth-to-solution-format [{:keys [maze] :as labyrinth}]
   (let [rooms (get-rooms maze)]
     (map
      (fn [row-of-rooms]
@@ -295,3 +295,23 @@
             (map (partial format "%x"))
             s/join))
      rooms)))
+
+(defn solve [line]
+  (-> (parse-input line)
+      move-route-and-back
+      compress-labyrinth
+      convert-labyrinth-to-solution-format))
+
+(defn solve-and-print [index input]
+  (with-out-str
+    (println (str "Case #" (inc index) ":"))
+    (doall (map println (solve input)))))
+
+(defn solve-file [file-name file-contents]
+  (spit file-name
+        (s/join (map-indexed solve-and-print
+                             file-contents))))
+
+(comment
+  (solve-file "input-small-output.txt"
+              (drop 1 input-small)))

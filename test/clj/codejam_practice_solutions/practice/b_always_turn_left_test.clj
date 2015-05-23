@@ -462,59 +462,63 @@
                               "⎕     ⎕"
                               "⎕⎕⎕⎕⎕⎕⎕"]))))))
 
-(deftest has-space-tests
-  (is (maze/has-space-above 1 1
-                            (:maze (parse-maze ["⎕ ⎕"
-                                                "⎕ ⎕"
-                                                "⎕⎕⎕"]))))
-  (is (maze/has-space-below 1 1
-                            (:maze (parse-maze ["⎕⎕⎕"
-                                                "⎕  "
-                                                "⎕ ⎕"]))))
-
-  (is (maze/has-space-left 1 1
+(deftest can-walk-tests
+  (is (maze/can-walk-north 1 1
+                           (:maze (parse-maze ["⎕ ⎕"
+                                               "⎕ ⎕"
+                                               "⎕⎕⎕"]))))
+  (is (maze/can-walk-south 1 1
                            (:maze (parse-maze ["⎕⎕⎕"
-                                               "   "
+                                               "⎕  "
                                                "⎕ ⎕"]))))
 
-  (is (maze/has-space-right 1 1
-                            (:maze (parse-maze ["⎕⎕⎕"
-                                                "⎕  "
-                                                "⎕ ⎕"])))))
+  (is (maze/can-walk-west 1 1
+                          (:maze (parse-maze ["⎕⎕⎕"
+                                              "   "
+                                              "⎕ ⎕"]))))
+
+  (is (maze/can-walk-east 1 1
+                          (:maze (parse-maze ["⎕⎕⎕"
+                                              "⎕  "
+                                              "⎕ ⎕"])))))
 
 (deftest convert-maze-to-solution-format
   (is (= ["1"]
-         (maze/convert-maze-to-solution-format
-          (:maze (parse-maze ["⎕ ⎕"
-                              "⎕ ⎕"
-                              "⎕⎕⎕"])))))
+         (maze/convert-labyrinth-to-solution-format
+          (parse-maze ["⎕ ⎕"
+                       "⎕ ⎕"
+                       "⎕⎕⎕"]))))
 
   (is (= ["a"]
-         (maze/convert-maze-to-solution-format
-          (:maze (parse-maze ["⎕⎕⎕"
-                              "⎕  "
-                              "⎕ ⎕"])))))
+         (maze/convert-labyrinth-to-solution-format
+          (parse-maze ["⎕⎕⎕"
+                       "⎕  "
+                       "⎕ ⎕"]))))
 
   (is (= ["1"]
-         (maze/convert-maze-to-solution-format
-          (:maze (parse-maze ["⎕ ⎕"
-                              "⎕ ⎕"
-                              "⎕⎕⎕"])))))
+         (maze/convert-labyrinth-to-solution-format
+          (parse-maze ["⎕ ⎕"
+                       "⎕ ⎕"
+                       "⎕⎕⎕"]))))
 
   (is (= ["ac5"
           "386"
           "9c7"
           "e43"
           "9c5"]
-         (maze/convert-maze-to-solution-format
-          (:maze (parse-maze ["⎕⎕⎕⎕⎕ ⎕"
-                              "⎕     ⎕"
-                              "⎕ ⎕⎕⎕⎕⎕"
-                              "⎕ ⎕   ⎕"
-                              "⎕ ⎕⎕⎕ ⎕"
-                              "⎕     ⎕"
-                              "⎕⎕⎕⎕⎕ ⎕"
-                              "    ⎕ ⎕"
-                              "⎕ ⎕⎕⎕ ⎕"
-                              "⎕     ⎕"
-                              "⎕⎕⎕⎕⎕⎕⎕"]))))))
+         (maze/convert-labyrinth-to-solution-format
+          (parse-maze ["⎕⎕⎕⎕⎕ ⎕"
+                       "⎕     ⎕"
+                       "⎕ ⎕⎕⎕⎕⎕"
+                       "⎕ ⎕   ⎕"
+                       "⎕ ⎕⎕⎕ ⎕"
+                       "⎕     ⎕"
+                       "⎕⎕⎕⎕⎕ ⎕"
+                       "    ⎕ ⎕"
+                       "⎕ ⎕⎕⎕ ⎕"
+                       "⎕     ⎕"
+                       "⎕⎕⎕⎕⎕⎕⎕"])))))
+
+(deftest solve
+  (is (= ["ac5" "386" "9c7" "e43" "9c5"]
+         (maze/solve "WRWWLWWLWWLWLWRRWRWWWRWWRWLW WWRRWLWLWWLWWLWWRWWRWWLW"))))
