@@ -327,15 +327,16 @@
 
 (defn solve-file [file-name file-contents]
   (spit file-name
-        (s/join (map-indexed solve-and-print
-                             file-contents))))
+        (s/join (pmap solve-and-print
+                      (range)
+                      file-contents))))
 
 (comment
 
   (profile :info :whatever
-           (solve-file "input-small-output.txt"
+           (solve-file "B-small-practice.out"
                        input-small))
 
   (profile :info :whatever
-           (solve-file "input-large-output.txt"
+           (solve-file "B-large-practice.out"
                        input-large)))
