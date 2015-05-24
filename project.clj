@@ -50,7 +50,8 @@
                    :rules :cljs}]}
 
   :profiles {:dev {:source-paths ["env/dev/clj"]
-                   :test-paths ["test/clj"
+                   :test-paths ["src"
+                                "test/clj"
                                 "target/test-classes"]
 
                    :dependencies [[figwheel "0.2.1-SNAPSHOT"]
