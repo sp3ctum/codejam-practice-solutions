@@ -27,7 +27,8 @@
 
   :uberjar-name "codejam-practice-solutions.jar"
 
-  :cljsbuild {:builds {:app {:source-paths ["src/cljs"]
+  :cljsbuild {:builds {:app {:source-paths ["src/cljs"
+                                            "target/generated/src/cljs"]
                              :compiler {:output-to     "resources/public/js/app.js"
                                         :output-dir    "resources/public/js/out"
                                         :source-map    "resources/public/js/out.js.map"
@@ -49,7 +50,8 @@
                    :rules :cljs}]}
 
   :profiles {:dev {:source-paths ["env/dev/clj"]
-                   :test-paths ["test/clj"]
+                   :test-paths ["test/clj"
+                                "target/test-classes"]
 
                    :dependencies [[figwheel "0.2.1-SNAPSHOT"]
                                   [figwheel-sidecar "0.2.1-SNAPSHOT"]
@@ -60,7 +62,7 @@
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
                    :plugins [[lein-figwheel "0.2.1-SNAPSHOT"]
-                             [com.keminglabs/cljx "0.4.0"]]
+                             [com.keminglabs/cljx "0.4.0" :exclusions [org.clojure/clojure]]]
 
                    :figwheel {:http-server-root "public"
                               :server-port 3449

@@ -4,6 +4,7 @@
 
 (ns codejam-practice-solutions.practice.b-always-turn-left
   (:require [clojure.string :as s]
+            [clojure.java.io :as io]
             [taoensso.timbre :as timbre]))
 
 (timbre/refer-timbre)
@@ -317,12 +318,12 @@
 (def input-small
   (drop 1
         (s/split-lines
-         (slurp "./src/clj/codejam_practice_solutions/practice/B-small-practice.in"))))
+         (slurp (io/resource "input-files/practice/B-small-practice.in")))))
 
 (def input-large
   (drop 1
         (s/split-lines
-         (slurp "./src/clj/codejam_practice_solutions/practice/B-large-practice.in"))))
+         (slurp (io/resource "input-files/practice/B-large-practice.in")))))
 
 (comment
 
