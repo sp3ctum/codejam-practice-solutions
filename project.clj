@@ -35,6 +35,19 @@
                                         :optimizations :none
                                         :pretty-print  true}}}}
 
+  :cljx {:builds [{:source-paths ["src/cljx"]
+                   :output-path "target/classes"
+                   :rules :clj}
+                  {:source-paths ["src/cljx"]
+                   :output-path "target/classes"
+                   :rules :cljs}
+                  {:source-paths ["test/cljx"]
+                   :output-path "target/test-classes"
+                   :rules :clj}
+                  {:source-paths ["test/cljx"]
+                   :output-path "target/test-classes"
+                   :rules :cljs}]}
+
   :profiles {:dev {:source-paths ["env/dev/clj"]
                    :test-paths ["test/clj"]
 
@@ -46,7 +59,8 @@
                    :repl-options {:init-ns codejam-practice-solutions.server
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
-                   :plugins [[lein-figwheel "0.2.1-SNAPSHOT"]]
+                   :plugins [[lein-figwheel "0.2.1-SNAPSHOT"]
+                             [com.keminglabs/cljx "0.4.0"]]
 
                    :figwheel {:http-server-root "public"
                               :server-port 3449
