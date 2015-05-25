@@ -18,7 +18,8 @@
                  [om "0.8.0-rc1"]
                  [environ "1.0.0"]
                  [http-kit "2.1.19"]
-                 [com.taoensso/timbre "3.4.0"]]
+                 [com.taoensso/timbre "3.4.0"]
+                 [prismatic/schema "0.4.3"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]

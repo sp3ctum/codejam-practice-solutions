@@ -2,7 +2,11 @@
   (:require [codejam-practice-solutions.practice.b-always-turn-left
              :as maze]
             [clojure.string :as s]
+            [schema.core :as sc]
+            [schema.test]
             [clojure.test :refer [deftest is] :as test]))
+
+(test/use-fixtures :once schema.test/validate-schemas)
 
 (declare parse-maze)
 
@@ -59,7 +63,8 @@
            {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}
            {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}
            {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}]}
-         (maze/create-unsolved-labyrinth "WW")))
+         (sc/with-fn-validation
+           (maze/create-unsolved-labyrinth "WW"))))
 
   (is (= ["░░░░░░░░ v ░░░░░░░░"
           "░░░░░░░░⎕ ⎕░░░░░░░░"

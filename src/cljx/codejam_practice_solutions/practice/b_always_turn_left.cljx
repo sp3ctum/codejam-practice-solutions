@@ -4,9 +4,14 @@
 
 (ns codejam-practice-solutions.practice.b-always-turn-left
   (:require [clojure.string :as s]
-            [clojure.java.io :as io]
-            [taoensso.timbre :as timbre]))
+            [clojure.java.io :as io])
+  #+clj
+  (:require [schema.core :as sc]
+            [taoensso.timbre :as timbre])
+  #+cljs
+  (:require [schema.core :as sc :include-macros true]))
 
+#+clj
 (timbre/refer-timbre)
 
 (def forward \W) ; w for walk
@@ -39,6 +44,16 @@
 ;; - if turning right, we can neither turn left or go forward, so
 ;;   there must be walls there
 ;;
+
+;; Schemas
+(def Cell {:type sc/Keyword})
+(def Row {:row-has-wall sc/Bool
+          :cells [Cell]})
+(def Player {(sc/required-key :x) sc/Int
+             (sc/required-key :y) sc/Int
+             (sc/required-key :facing) sc/Keyword})
+(def Labyrinth {(sc/required-key :player) Player
+                (sc/required-key :maze) [Row]})
 
 (defn parse-input [input-line]
   (let [[entrance-to-exit exit-to-entrance]
