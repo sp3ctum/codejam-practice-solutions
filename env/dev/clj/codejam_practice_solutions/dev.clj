@@ -12,15 +12,15 @@
 
 (def inject-devmode-html
   (comp
-     (set-attr :class "is-dev")
-     (prepend (html [:script {:type "text/javascript" :src "/js/out/goog/base.js"}]))
-     (prepend (html [:script {:type "text/javascript" :src "/react/react.js"}]))
-     (append  (html [:script {:type "text/javascript"} "goog.require('codejam_practice_solutions.main')"]))))
+   (set-attr :class "is-dev")
+   (prepend (html [:script {:type "text/javascript" :src "/js/out/goog/base.js"}]))
+   (prepend (html [:script {:type "text/javascript" :src "/react/react.js"}]))
+   (append  (html [:script {:type "text/javascript"} "goog.require('codejam_practice_solutions.cljs.main')"]))))
 
 (defn browser-repl []
   (let [repl-env (weasel/repl-env :ip "0.0.0.0" :port 9001)]
     (piggieback/cljs-repl :repl-env repl-env)
-    (piggieback/cljs-eval repl-env '(in-ns 'codejam-practice-solutions.core) {})))
+    (piggieback/cljs-eval repl-env '(in-ns 'codejam-practice-solutions.cljs.core) {})))
 
 (defn start-figwheel []
   (let [server (fig/start-server { :css-dirs ["resources/public/css"] })

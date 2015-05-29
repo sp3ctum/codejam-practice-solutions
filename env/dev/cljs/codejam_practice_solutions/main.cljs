@@ -1,5 +1,5 @@
-(ns codejam-practice-solutions.main
-  (:require [codejam-practice-solutions.core :as core]
+(ns codejam-practice-solutions.cljs.main
+  (:require [cljs.codejam-practice-solutions.core :as core]
             [figwheel.client :as figwheel :include-macros true]
             [cljs.core.async :refer [put!]]
             [weasel.repl :as weasel]))

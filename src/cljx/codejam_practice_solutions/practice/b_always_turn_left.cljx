@@ -3,13 +3,14 @@
 ;; Problem B. Always Turn Left
 
 (ns codejam-practice-solutions.practice.b-always-turn-left
-  (:require [clojure.string :as s]
-            [clojure.java.io :as io])
   #+clj
   (:require [schema.core :as sc]
-            [taoensso.timbre :as timbre])
+            [taoensso.timbre :as timbre]
+            [clojure.string :as s]
+            [clojure.java.io :as io])
   #+cljs
-  (:require [schema.core :as sc :include-macros true]))
+  (:require [schema.core :as sc :include-macros true]
+            [clojure.string :as s]))
 
 #+clj
 (timbre/refer-timbre)
@@ -52,10 +53,13 @@
 (def Player {(sc/required-key :x) sc/Int
              (sc/required-key :y) sc/Int
              (sc/required-key :facing) sc/Keyword})
+(def Maze [Row])
 (def Labyrinth {(sc/required-key :player) Player
-                (sc/required-key :maze) [Row]})
+                (sc/required-key :maze) Maze})
+(def Route {(sc/required-key :forward) sc/Str
+            (sc/required-key :bacward) sc/Str})
 
-(defn parse-input [input-line]
+(sc/defn parse-input :- Route [input-line]
   (let [[entrance-to-exit exit-to-entrance]
         (s/split input-line #" ")]
     {:forward entrance-to-exit
@@ -85,11 +89,10 @@
   (let [height (inc (* 2 (count route)))
         width (+ 3 (* 4 (- (count route)
                            2)))
-        maze-rows (p :create-maze-cells
-                     (let [row {:row-has-wall false
-                                :cells (vec (for [column (range width)]
-                                              unknown-cell))}]
-                       (vec (repeat height row))))
+        maze-rows (let [row {:row-has-wall false
+                             :cells (vec (for [column (range width)]
+                                           unknown-cell))}]
+                    (vec (repeat height row)))
         ;; Player coordinates are always at the top center.
         ;; Adjust to 0-based array index with dec.
         [row column] [0 (dec (quot (inc width)
@@ -115,7 +118,7 @@
         (assoc-cell row column empty-cell)
         (assoc-cell 1 column empty-cell))))
 
-(defnp non-unknown-rows [{:keys [maze] :as labyrinth}]
+(defn non-unknown-rows [{:keys [maze] :as labyrinth}]
   (let [new-maze (vec (filter :row-has-wall maze))]
     (assoc labyrinth :maze new-maze)))
 
@@ -135,7 +138,7 @@
     (apply min (filter (comp not nil?)
                        indices))))
 
-(defnp only-non-unknown-columns [{:keys [maze player] :as labyrinth}]
+(defn only-non-unknown-columns [{:keys [maze player] :as labyrinth}]
   (let [row-cells (map :cells maze)
         row-length (count (first row-cells))
         earliest-column (first-non-unknown-index row-cells)
@@ -152,7 +155,7 @@
         (assoc :maze new-maze)
         (assoc :player new-player))))
 
-(defnp compress-labyrinth
+(defn compress-labyrinth
   [labyrinth]
   (->> labyrinth
        non-unknown-rows
@@ -262,13 +265,13 @@
       turn-player-right
       mark-unknown-as-empty-at-player-left))
 
-(defnp move-route-and-back [{:keys [forward backward]}]
+(defn move-route-and-back [{:keys [forward backward]}]
   (-> (create-unsolved-labyrinth (longest forward backward))
       (move-route forward)
       turn-around-at-end-of-labyrinth
       (move-route backward)))
 
-(defn get-cells-with-coordinates [maze]
+(sc/defn get-cells-with-coordinates [maze :- Maze]
   (for [[row-index row] (map vector (range) maze)
         [cell-index cell] (map vector (range) (:cells row))]
     [row-index cell-index cell]))
@@ -302,21 +305,29 @@
           (can-walk-west row column maze)  (bit-or 2r0100)
           (can-walk-east row column maze)  (bit-or 2r1000)))
 
-(defnp convert-labyrinth-to-solution-format [{:keys [maze] :as labyrinth}]
+(defn to-hex [decimal-number]
+  #+clj (format "%x" decimal-number)
+  #+cljs (.toString decimal-number 16))
+
+(defn convert-labyrinth-to-solution-format [{:keys [maze] :as labyrinth}]
   (let [row-cells (vec (map :cells maze))
         rooms (get-rooms maze)]
     (map
      (fn [row-of-rooms]
        (->> row-of-rooms
             (map (partial encode-room row-cells))
-            (map (partial format "%x"))
+            (map to-hex)
             s/join))
      rooms)))
 
-(defn solve [line]
+(defn solve-debug [line]
   (-> (parse-input line)
       move-route-and-back
       compress-labyrinth
+      ))
+
+(defn solve [line]
+  (-> (solve-debug line)
       convert-labyrinth-to-solution-format))
 
 (defn solve-and-print [index input]
@@ -324,23 +335,24 @@
     (println (str "Case #" (inc index) ":"))
     (doall (map println (solve input)))))
 
+#+clj
 (defn solve-file [file-name file-contents]
   (spit file-name
         (s/join (pmap solve-and-print
                       (range)
                       file-contents))))
 
-(def input-small
-  (drop 1
-        (s/split-lines
-         (slurp (io/resource "input-files/practice/B-small-practice.in")))))
-
-(def input-large
-  (drop 1
-        (s/split-lines
-         (slurp (io/resource "input-files/practice/B-large-practice.in")))))
-
 (comment
+
+  (def input-small
+    (drop 1
+          (s/split-lines
+           (slurp (io/resource "input-files/practice/B-small-practice.in")))))
+
+  (def input-large
+    (drop 1
+          (s/split-lines
+           (slurp (io/resource "input-files/practice/B-large-practice.in")))))
 
   (profile :info :whatever
            (solve-file "B-small-practice.out"

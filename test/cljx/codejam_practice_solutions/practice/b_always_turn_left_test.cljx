@@ -1,11 +1,20 @@
 (ns codejam-practice-solutions.practice.b-always-turn-left-test
-  (:require [codejam-practice-solutions.practice.b-always-turn-left
-             :as maze]
+  (:require [codejam-practice-solutions.practice.b-always-turn-left :as maze]
             [clojure.string :as s]
             [schema.core :as sc]
+            #+clj
             [schema.test]
-            [clojure.test :refer [deftest is] :as test]))
+            #+cljs
+            [schema.test :include-macros true]
+            #+clj
+            [clojure.test :refer [deftest is] :as test]
+            #+cljs
+            [cemerick.cljs.test :as test])
+  #+cljs
+  (:require-macros [cemerick.cljs.test :refer (is deftest run-tests)]))
 
+;; todo can this be used from js?
+#+clj
 (test/use-fixtures :once schema.test/validate-schemas)
 
 (declare parse-maze)
@@ -63,8 +72,7 @@
            {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}
            {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}
            {:row-has-wall false, :cells [{:type :unknown} {:type :unknown} {:type :unknown}]}]}
-         (sc/with-fn-validation
-           (maze/create-unsolved-labyrinth "WW"))))
+         (maze/create-unsolved-labyrinth "WW")))
 
   (is (= ["░░░░░░░░ v ░░░░░░░░"
           "░░░░░░░░⎕ ⎕░░░░░░░░"
@@ -617,4 +625,6 @@
   (is (= ["3" "3" "3" "3" "3" "3" "b" "3" "3" "1"]
          (maze/solve "WWWWWWWLW WLWWWRRWWWWWWWWWW"))))
 
-
+#+cljs
+(comment
+  (run-tests))

@@ -15,11 +15,13 @@
                  [ring/ring-defaults "0.1.3"]
                  [compojure "1.3.1"]
                  [enlive "1.1.5"]
-                 [om "0.8.0-rc1"]
+                 [reagent "0.5.0"]
+                 [quil "2.2.5"]
                  [environ "1.0.0"]
                  [http-kit "2.1.19"]
                  [com.taoensso/timbre "3.4.0"]
-                 [prismatic/schema "0.4.3"]]
+                 [prismatic/schema "0.4.3"]
+                 [com.cemerick/clojurescript.test "0.3.3"]]
 
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-environ "1.0.0"]]
@@ -28,8 +30,7 @@
 
   :uberjar-name "codejam-practice-solutions.jar"
 
-  :cljsbuild {:builds {:app {:source-paths ["src/cljs"
-                                            "target/generated/src/cljs"]
+  :cljsbuild {:builds {:app {:source-paths ["src/cljs"]
                              :compiler {:output-to     "resources/public/js/app.js"
                                         :output-dir    "resources/public/js/out"
                                         :source-map    "resources/public/js/out.js.map"
