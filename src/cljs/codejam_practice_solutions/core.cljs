@@ -10,11 +10,16 @@
 (def AppState {(s/required-key :route) s/Str
                (s/required-key :maze) maze/Labyrinth})
 
-(def app-state (atom {:route "WWWLWLWRRWLWLWWLWRW WLWRWWRWWRWWLWLWWRRWLWLWRRWRWLWLWRRWWLW"
+(def app-state (atom {:available-routes ["WWWWWWWLW WLWWWRRWWWWWWWWWW"
+                                         "WRWWLWWLWWLWLWRRWRWWWRWWRWLW WWRRWLWLWWLWWLWWRWWRWWLW"
+                                         (str "WWLWLWRRWRWWLW"
+                                              "WWLWLWWRRWLWLWRRWWLW " ; space
+                                              "WRWLWLWRWRWWLWWLWLWRWRWW"
+                                              "RRWWLWLWRWLWLWRRWRWLWLWW"
+                                              "LWWWRRWWWRWLWLWRRWRWLWLW"
+                                              "RRWWLWLWWRRWWLWLWWRRWLWLWW")]
+                      :route "WWWWWWWLW WLWWWRRWWWWWWWWWW"
                       :labyrinth nil}))
-
-(swap! app-state update-in [:labyrinth]
-       #(maze/solve-debug (:route @app-state)))
 
 (defn main [])
 
@@ -47,17 +52,30 @@
   (draw-player (:player labyrinth))
   (draw-cells (get-in labyrinth [:maze])))
 
-(defn setup []
+(s/defn change-route [app-state
+                      new-route :- s/Str]
+  (swap! app-state assoc-in [:route] new-route)
+  (swap! app-state update-in [:labyrinth]
+         #(maze/solve-debug new-route)))
+
+(defn setup [app-state]
+  (change-route app-state (:route @app-state))
   (q/frame-rate 1))
 
 (defn main-component []
   [:div
-   [:canvas#canvas]])
+   [:canvas#canvas]
+   [:p "Route"
+    [:select
+     {:on-change #(change-route app-state
+                                (.. % -currentTarget -value))}
+     (for [route (get-in @app-state [:available-routes])]
+       [:option route])]]])
 
 (reagent/render main-component (js/document.getElementById "app"))
 
 (q/defsketch my-sketch
   :host "canvas"
-  :setup setup
+  :setup #(setup app-state)
   :draw #(draw (:labyrinth @app-state))
   :size [300 300])
