@@ -18,6 +18,7 @@
                  [reagent "0.5.0"]
                  [quil "2.2.5"]
                  [environ "1.0.0"]
+                 [org.webjars/bootstrap "3.2.0"]
                  [http-kit "2.1.19"]
                  [com.taoensso/timbre "3.4.0"]
                  [prismatic/schema "0.4.3"]
